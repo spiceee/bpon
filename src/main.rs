@@ -1,4 +1,11 @@
+use std::ops::DerefMut;
+
 use actix_web::{web, App, HttpServer};
+
+mod embedded {
+    use refinery::embed_migrations;
+    embed_migrations!("migrations");
+}
 
 mod config {
     use serde::Deserialize;
@@ -98,10 +105,9 @@ mod db {
 }
 
 mod handlers {
+    use crate::{db, errors::MyError, models::User};
     use actix_web::{web, Error, HttpResponse};
     use deadpool_postgres::{Client, Pool};
-
-    use crate::{db, errors::MyError, models::User};
 
     pub async fn get_users(db_pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
         let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
@@ -125,12 +131,11 @@ mod handlers {
     }
 }
 
+use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
 use handlers::{add_user, get_users};
 use tokio_postgres::NoTls;
-
-use crate::config::ExampleConfig;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -142,8 +147,18 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     let config: ExampleConfig = config_.try_deserialize().unwrap();
-
     let pool = config.pg.create_pool(None, NoTls).unwrap();
+
+    // Perform migrations
+    let mut conn = pool.get().await.unwrap();
+    let client = conn.deref_mut();
+
+    let migration_report = embedded::migrations::runner()
+        .run_async(client.deref_mut())
+        .await
+        .unwrap();
+
+    println!("migration_report {:#?}", migration_report);
 
     let server = HttpServer::new(move || {
         App::new().app_data(web::Data::new(pool.clone())).service(
@@ -154,6 +169,7 @@ async fn main() -> std::io::Result<()> {
     })
     .bind(config.server_addr.clone())?
     .run();
+
     println!("Server running at http://{}/", config.server_addr);
 
     server.await
