@@ -1,6 +1,5 @@
-use std::ops::DerefMut;
-
 use actix_web::{web, App, HttpServer};
+use std::ops::DerefMut;
 
 mod embedded {
     use refinery::embed_migrations;
