@@ -1,0 +1,29 @@
+[package]
+name = "bpon"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4"
+deadpool-postgres = { version = "0.12", features = ["serde"] }
+serde = { version = "1.0.137", features = ["derive"] }
+tokio-pg-mapper = "0.2.0"
+tokio-pg-mapper-derive = "0.2.0"
+tokio-postgres = "0.7.6"
+config = "0.13"
+
+derive_more = "0.99.7"
+chrono = { version = "0.4.20", default-features = false, features = ["clock", "serde"] }
+dotenvy = "0.15"
+env_logger = "0.10"
+futures-util = { version = "0.3.17", default-features = false, features = ["std"] }
+log = "0.4"
+openssl = { version = "0.10.60", features = ["v110"] }
+rand = "0.8"
+rustls = "0.21"
+serde_json = "1"
+tokio = { version = "1.24.2", features = ["sync", "io-util"] }
+tokio-util = "0.7.4"
+tokio-stream = "0.1.1"
