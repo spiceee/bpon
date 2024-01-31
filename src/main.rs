@@ -1,5 +1,46 @@
-use actix_web::{web, App, HttpServer};
+#![allow(unused_imports)]
+use std::{convert::Infallible, io};
+
+use actix_files::{Files, NamedFile};
+use actix_session::{storage::SessionStore, Session, SessionMiddleware};
+use actix_web::{
+    error, get,
+    http::{
+        header::{self, ContentType},
+        Method, StatusCode,
+    },
+    middleware, web, App, Either, HttpRequest, HttpResponse, HttpServer, Responder, Result,
+};
+
+use async_stream::stream;
 use std::ops::DerefMut;
+
+/// simple index handler
+#[get("/welcome")]
+async fn welcome(req: HttpRequest, session: Session) -> Result<HttpResponse> {
+    println!("{req:?}");
+
+    // session
+    let mut counter = 1;
+    if let Some(count) = session.get::<i32>("counter")? {
+        println!("SESSION value: {count}");
+        counter = count + 1;
+    }
+
+    // set counter to session
+    session.insert("counter", counter)?;
+
+    // response
+    Ok(HttpResponse::build(StatusCode::OK)
+        .content_type(ContentType::plaintext())
+        .body(include_str!("../static/welcome.html")))
+}
+
+/// favicon handler
+#[get("/favicon")]
+async fn favicon() -> Result<impl Responder> {
+    Ok(NamedFile::open("static/favicon.ico")?)
+}
 
 mod embedded {
     use refinery::embed_migrations;
@@ -130,6 +171,31 @@ mod handlers {
     }
 }
 
+async fn default_handler(req_method: Method) -> Result<impl Responder> {
+    match req_method {
+        Method::GET => {
+            let file = NamedFile::open("static/404.html")?
+                .customize()
+                .with_status(StatusCode::NOT_FOUND);
+            Ok(Either::Left(file))
+        }
+        _ => Ok(Either::Right(HttpResponse::MethodNotAllowed().finish())),
+    }
+}
+
+/// response body
+async fn response_body(path: web::Path<String>) -> HttpResponse {
+    let name = path.into_inner();
+
+    HttpResponse::Ok()
+        .content_type(ContentType::plaintext())
+        .streaming(stream! {
+            yield Ok::<_, Infallible>(web::Bytes::from("Hello "));
+            yield Ok::<_, Infallible>(web::Bytes::from(name));
+            yield Ok::<_, Infallible>(web::Bytes::from("!"));
+        })
+}
+
 use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
@@ -160,11 +226,24 @@ async fn main() -> std::io::Result<()> {
     println!("migration_report {:#?}", migration_report);
 
     let server = HttpServer::new(move || {
-        App::new().app_data(web::Data::new(pool.clone())).service(
-            web::resource("/users")
-                .route(web::post().to(add_user))
-                .route(web::get().to(get_users)),
-        )
+        App::new()
+            .app_data(web::Data::new(pool.clone()))
+            .service(
+                web::resource("/users")
+                    .route(web::post().to(add_user))
+                    .route(web::get().to(get_users)),
+            )
+            .service(
+                web::resource("/").route(web::get().to(|req: HttpRequest| async move {
+                    println!("{req:?}");
+                    HttpResponse::Found()
+                        .insert_header((header::LOCATION, "static/welcome.html"))
+                        .finish()
+                })),
+            )
+            .service(welcome)
+            .service(web::resource("/async-body/{name}").route(web::get().to(response_body)))
+            .default_service(web::to(default_handler))
     })
     .bind(config.server_addr.clone())?
     .run();
