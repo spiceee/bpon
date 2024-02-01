@@ -24,7 +24,10 @@ actix-web = "4.4"
 actix-web-actors = "4.1"
 actix-web-lab = "0.20"
 actix-ws = "0.2.5"
+actix-rt = "2.2.0"
+actix-service = "2.0.0"
 
+ssr_rs = "0.2.3"
 deadpool-postgres = { version = "0.12", features = ["serde"] }
 serde = { version = "1.0.137", features = ["derive"] }
 tokio-pg-mapper = "0.2.0"
@@ -47,3 +50,8 @@ tokio-util = "0.7.4"
 tokio-stream = "0.1.1"
 refinery = { version = "0.8.12", features = ["tokio-postgres"] }
 async-stream = "0.3"
+futures = "0.3.14"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = "0.11"
