@@ -1,6 +1,4 @@
 #![allow(unused_imports)]
-use std::{convert::Infallible, io};
-
 use actix_files::{Files, NamedFile};
 use actix_session::{storage::SessionStore, Session, SessionMiddleware};
 use actix_web::{
@@ -9,8 +7,11 @@ use actix_web::{
         header::{self, ContentType},
         Method, StatusCode,
     },
-    middleware, web, App, Either, HttpRequest, HttpResponse, HttpServer, Responder, Result,
+    middleware, web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
+use futures::{future::ok, stream::once};
+use ssr_rs::Ssr;
+use std::{convert::Infallible, io};
 
 use async_stream::stream;
 use std::ops::DerefMut;
@@ -36,10 +37,42 @@ async fn welcome(req: HttpRequest, session: Session) -> Result<HttpResponse> {
         .body(include_str!("../static/welcome.html")))
 }
 
+#[get("/")]
+async fn index(
+    req: HttpRequest,
+    data: web::Data<AppState>,
+    session: Session,
+) -> Result<HttpResponse> {
+    let props = format!(
+        r##"{{
+            "location": "{}",
+            "context": {{}}
+        }}"##,
+        req.uri()
+    );
+
+    let mut counter = 1;
+    if let Some(count) = session.get::<i32>("counter")? {
+        println!("SESSION value: {count}");
+        counter = count + 1;
+    }
+
+    // set counter to session
+    session.insert("counter", counter)?;
+
+    let source = data.js_source.lock().unwrap();
+    let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
+    let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+
+    Ok(HttpResponse::build(StatusCode::OK)
+        .content_type("text/html; charset=utf-8")
+        .streaming(body))
+}
+
 /// favicon handler
 #[get("/favicon")]
 async fn favicon() -> Result<impl Responder> {
-    Ok(NamedFile::open("static/favicon.ico")?)
+    Ok(NamedFile::open("../static/favicon.ico")?)
 }
 
 mod embedded {
@@ -200,7 +233,13 @@ use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
 use handlers::{add_user, get_users};
+use std::fs::read_to_string;
+use std::sync::Mutex;
 use tokio_postgres::NoTls;
+
+struct AppState {
+    js_source: Mutex<String>, // <- Mutex is necessary to mutate safely across threads
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -228,22 +267,31 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(AppState {
+                js_source: Mutex::new(
+                    read_to_string("../dist/index.js").expect("Failed to load the resource."),
+                ),
+            }))
+            .service(Files::new("/styles", "../dist/styles/").show_files_listing())
+            .service(Files::new("/images", "../dist/images/").show_files_listing())
+            .service(Files::new("/scripts", "../dist/scripts/").show_files_listing())
             .service(
                 web::resource("/users")
                     .route(web::post().to(add_user))
                     .route(web::get().to(get_users)),
             )
-            .service(
-                web::resource("/").route(web::get().to(|req: HttpRequest| async move {
-                    println!("{req:?}");
-                    HttpResponse::Found()
-                        .insert_header((header::LOCATION, "static/welcome.html"))
-                        .finish()
-                })),
-            )
-            .service(welcome)
+            // .service(
+            //     web::resource("/").route(web::get().to(|req: HttpRequest| async move {
+            //         println!("{req:?}");
+            //         HttpResponse::Found()
+            //             .insert_header((header::LOCATION, "static/welcome.html"))
+            //             .finish()
+            //     })),
+            // )
+            // .service(welcome)
             .service(web::resource("/async-body/{name}").route(web::get().to(response_body)))
             .default_service(web::to(default_handler))
+            .service(index)
     })
     .bind(config.server_addr.clone())?
     .run();

@@ -34,7 +34,7 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     Ok(server)
 }
 
-#[get("*")]
+#[get("/")]
 async fn index(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
     let props = format!(
         r##"{{
