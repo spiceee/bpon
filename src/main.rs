@@ -90,6 +90,7 @@ mod config {
 }
 
 mod models {
+    use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
     use tokio_pg_mapper_derive::PostgresMapper;
 
@@ -100,6 +101,10 @@ mod models {
         pub first_name: String,
         pub last_name: String,
         pub username: String,
+        encrypted_password: Option<String>,
+        pub is_admin: bool,
+        pub is_newsletter_subscriber: bool,
+        // pub created_at: Option<NaiveDateTime>,
     }
 }
 
