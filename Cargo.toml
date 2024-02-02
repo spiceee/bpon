@@ -49,6 +49,7 @@ tokio = { version = "1.24.2", features = ["sync", "io-util"] }
 tokio-util = "0.7.4"
 tokio-stream = "0.1.1"
 refinery = { version = "0.8.12", features = ["tokio-postgres"] }
+barrel = { version = "0.7.0", features = ["pg"] }
 async-stream = "0.3"
 futures = "0.3.14"
 
