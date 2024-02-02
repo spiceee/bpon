@@ -9,9 +9,11 @@ use actix_web::{
     },
     middleware, web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
+use barrel::types::Type;
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
 use std::{convert::Infallible, io};
+use tokio_postgres::types::FromSql;
 
 use async_stream::stream;
 use std::ops::DerefMut;
@@ -90,21 +92,22 @@ mod config {
 }
 
 mod models {
-    use chrono::NaiveDateTime;
+    use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
     use tokio_pg_mapper_derive::PostgresMapper;
 
     #[derive(Deserialize, PostgresMapper, Serialize)]
-    #[pg_mapper(table = "users")] // singular 'user' is a keyword..
+    #[pg_mapper(table = "users")] // singular 'user' is a keyword
+    #[serde(rename(serialize = "ser_name"))]
     pub struct User {
         pub email: String,
         pub first_name: String,
         pub last_name: String,
         pub username: String,
-        encrypted_password: Option<String>,
         pub is_admin: bool,
         pub is_newsletter_subscriber: bool,
-        // pub created_at: Option<NaiveDateTime>,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
     }
 }
 

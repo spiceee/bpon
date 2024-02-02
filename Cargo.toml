@@ -33,6 +33,7 @@ serde = { version = "1.0.137", features = ["derive"] }
 tokio-pg-mapper = "0.2.0"
 tokio-pg-mapper-derive = "0.2.0"
 tokio-postgres = "0.7.6"
+postgres = { version = "0.19.7", features = ["with-chrono-0_4"] }
 config = "0.13"
 
 derive_more = "0.99.7"
