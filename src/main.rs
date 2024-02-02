@@ -269,12 +269,12 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(AppState {
                 js_source: Mutex::new(
-                    read_to_string("../dist/index.js").expect("Failed to load the resource."),
+                    read_to_string("./dist/index.js").expect("Failed to load the resource."),
                 ),
             }))
-            .service(Files::new("/styles", "../dist/styles/").show_files_listing())
-            .service(Files::new("/images", "../dist/images/").show_files_listing())
-            .service(Files::new("/scripts", "../dist/scripts/").show_files_listing())
+            .service(Files::new("/styles", "./dist/styles/").show_files_listing())
+            .service(Files::new("/images", "./dist/images/").show_files_listing())
+            .service(Files::new("/scripts", "./dist/scripts/").show_files_listing())
             .service(
                 web::resource("/users")
                     .route(web::post().to(add_user))
