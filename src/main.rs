@@ -98,7 +98,6 @@ mod models {
 
     #[derive(Deserialize, PostgresMapper, Serialize)]
     #[pg_mapper(table = "users")] // singular 'user' is a keyword
-    #[serde(rename(serialize = "ser_name"))]
     pub struct User {
         pub email: String,
         pub first_name: String,
@@ -108,6 +107,15 @@ mod models {
         pub is_newsletter_subscriber: bool,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Deserialize, PostgresMapper, Serialize)]
+    #[pg_mapper(table = "tracking_codes")]
+    pub struct TrackingCode {
+        pub code: String,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+        pub user_id: i32,
     }
 }
 
@@ -144,7 +152,10 @@ mod db {
     use deadpool_postgres::Client;
     use tokio_pg_mapper::FromTokioPostgresRow;
 
-    use crate::{errors::MyError, models::User};
+    use crate::{
+        errors::MyError,
+        models::{TrackingCode, User},
+    };
 
     pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
         let stmt = include_str!("../sql/get_users.sql");
