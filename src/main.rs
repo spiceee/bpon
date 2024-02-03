@@ -93,12 +93,23 @@ mod config {
 
 mod models {
     use chrono::{DateTime, Utc};
+    use postgres::Row;
     use serde::{Deserialize, Serialize};
     use tokio_pg_mapper_derive::PostgresMapper;
 
-    #[derive(Deserialize, PostgresMapper, Serialize)]
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone)]
+    #[pg_mapper(table = "tracking_codes")]
+    pub struct TrackingCode {
+        pub code: String,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+        pub user_id: i32,
+    }
+
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone)]
     #[pg_mapper(table = "users")] // singular 'user' is a keyword
     pub struct User {
+        pub id: i32,
         pub email: String,
         pub first_name: String,
         pub last_name: String,
@@ -109,13 +120,10 @@ mod models {
         pub updated_at: DateTime<Utc>,
     }
 
-    #[derive(Deserialize, PostgresMapper, Serialize)]
-    #[pg_mapper(table = "tracking_codes")]
-    pub struct TrackingCode {
-        pub code: String,
-        pub created_at: DateTime<Utc>,
-        pub updated_at: DateTime<Utc>,
-        pub user_id: i32,
+    #[derive(Deserialize, Serialize, Clone)]
+    pub struct UserProfile {
+        pub user: User,
+        pub tracking_codes: Vec<TrackingCode>,
     }
 }
 
@@ -158,12 +166,12 @@ mod db {
     };
 
     pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
-        let stmt = include_str!("../sql/get_users.sql");
-        let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = client.prepare(&stmt).await.unwrap();
+        let user_sql = include_str!("../sql/get_users.sql");
+        let user_sql = user_sql.replace("$table_fields", &User::sql_table_fields());
+        let user_sql = client.prepare(&user_sql).await.unwrap();
 
         let results = client
-            .query(&stmt, &[])
+            .query(&user_sql, &[])
             .await?
             .iter()
             .map(|row| User::from_row_ref(row).unwrap())
@@ -194,16 +202,51 @@ mod db {
             .pop()
             .ok_or(MyError::NotFound) // more applicable for SELECTs
     }
+
+    pub async fn get_tracking_codes(
+        client: &Client,
+        user_id: i32,
+    ) -> Result<Vec<TrackingCode>, MyError> {
+        let _code_sql = include_str!("../sql/get_tracking_codes_by_user.sql");
+        let _code_sql = _code_sql
+            .replace("$table_fields", &TrackingCode::sql_table_fields())
+            .replace("$user_id", &user_id.to_string());
+        let code_sql = client.prepare(&_code_sql).await.unwrap();
+
+        let results = client
+            .query(&code_sql, &[])
+            .await?
+            .iter()
+            .map(|row| TrackingCode::from_row_ref(row).unwrap())
+            .collect::<Vec<TrackingCode>>();
+
+        Ok(results)
+    }
 }
 
 mod handlers {
-    use crate::{db, errors::MyError, models::User};
+    use crate::{
+        db,
+        errors::MyError,
+        models::{TrackingCode, User, UserProfile},
+    };
     use actix_web::{web, Error, HttpResponse};
     use deadpool_postgres::{Client, Pool};
 
-    pub async fn get_users(db_pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
+    pub async fn get_tracking_codes(
+        db_pool: web::Data<Pool>,
+        path: web::Path<String>,
+    ) -> Result<HttpResponse, Error> {
+        let user_id = path.into_inner().parse::<i32>().unwrap();
         let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
+        let tracking_codes = db::get_tracking_codes(&client, user_id).await?;
+
+        Ok(HttpResponse::Ok().json(tracking_codes))
+    }
+
+    pub async fn get_users(db_pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
         let users = db::get_users(&client).await?;
 
         Ok(HttpResponse::Ok().json(users))
@@ -251,7 +294,7 @@ async fn response_body(path: web::Path<String>) -> HttpResponse {
 use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
-use handlers::{add_user, get_users};
+use handlers::{add_user, get_tracking_codes, get_users};
 use std::fs::read_to_string;
 use std::sync::Mutex;
 use tokio_postgres::NoTls;
@@ -309,6 +352,9 @@ async fn main() -> std::io::Result<()> {
             // )
             // .service(welcome)
             .service(web::resource("/async-body/{name}").route(web::get().to(response_body)))
+            .service(
+                web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
+            )
             .default_service(web::to(default_handler))
             .service(index)
     })
