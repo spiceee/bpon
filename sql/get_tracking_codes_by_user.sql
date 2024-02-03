@@ -1,0 +1,1 @@
+SELECT $table_fields FROM bpon_dev.tracking_codes where user_id = $user_id;
