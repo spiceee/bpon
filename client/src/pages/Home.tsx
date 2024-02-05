@@ -1,18 +1,16 @@
-import React from 'react'
-import Counter from '../components/Counter'
-import Link from '../components/Link'
+import React from 'react';
+import Form from '../components/Form';
+import Link from '../components/Link';
 
 const Home: React.FC = () => {
-   return (
-      <>
-         <div className='wrapper'>
-            <h1>Importação Não Autorizada</h1>
-            <p>React (SSR) project powered by actix backend and graphql</p>
-            <Counter />
-            <Link link='https://github.com/Valerioageno/reactix'>Repo</Link>
-         </div>
-      </>
-   )
-}
+    return (
+        <>
+            <div className="wrapper envelope">
+                <h1>Importação Não Autorizada</h1>
+                <Form />
+            </div>
+        </>
+    );
+};
 
-export default Home
+export default Home;
