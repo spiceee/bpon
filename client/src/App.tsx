@@ -18,6 +18,11 @@ const App: React.FC = () => {
                 <meta charSet="utf-8" />
                 <title>Importação Não Autorizada</title>
                 <link rel="icon" type="image/png" href={favicon} />
+                <script
+                    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                    async
+                    defer
+                ></script>
             </Helmet>
             <Navbar />
             <Switch>

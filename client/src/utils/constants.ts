@@ -13,6 +13,19 @@ export const YEARS = Array.from(
     (v, k) => k + START_YEAR + 1
 ).reverse();
 
+export const PUBLIC_CAPTCHA_SITE_KEY = '0x4AAAAAAARUtku6T8l9ez0f';
+
+export const REASONS = [
+    {
+        code: 'not_authorized',
+        reasonPtBr: 'IMPORTAÇÃO NÃO AUTORIZADA',
+    },
+    {
+        code: 'others',
+        reasonPtBr: 'OUTRAS',
+    },
+];
+
 export const COUNTRIES = [
     {
         namePtBr: 'Afeganistão',

@@ -2,7 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 
-import { DEFAULT, COUNTRIES, DAYS, MONTHS, YEARS } from '../utils/constants';
+import {
+    DEFAULT,
+    COUNTRIES,
+    DAYS,
+    MONTHS,
+    YEARS,
+    REASONS,
+} from '../utils/constants';
 
 const formStates = Object.freeze({
     SUCCESS: 'SUCCESS',
@@ -23,8 +30,8 @@ const Form: React.FC = () => {
         formState: { errors },
     } = useForm({
         defaultValues: {
-            code: DEFAULT,
-            reason: DEFAULT,
+            code: '',
+            reason: REASONS[0].code,
             country_of_origin: DEFAULT,
             date_of_postage: DEFAULT,
             dopMon: DEFAULT,
@@ -54,14 +61,20 @@ const Form: React.FC = () => {
                         />
                         <div className="error"></div>
                     </div>
+
                     <div className="inputWrapper">
                         <label htmlFor="reason">Razão da devolução</label>
-                        <input
+                        <select
                             {...register('reason', {
-                                required: true,
+                                required: false,
                             })}
-                            type="text"
-                        />
+                        >
+                            {REASONS.map(reason => (
+                                <option value={reason.code} key={reason.code}>
+                                    {reason.reasonPtBr}
+                                </option>
+                            ))}
+                        </select>
                         <div className="error"></div>
                     </div>
                 </div>
