@@ -128,6 +128,7 @@ mod models {
         pub country_of_origin: String,
         pub date_of_postage: DateTime<Utc>,
         pub value_in_real: f64,
+        pub reimbursed: bool,
     }
 }
 
