@@ -23,30 +23,54 @@ $small: 1120px;
 h1 {
     font-size: 3rem;
     font-weight: 900;
-    line-height: 220px;
-    margin-left: 10px;
+    line-height: 150%;
+    margin-left: 1rem;
+
     @media screen and (max-width: $medium) {
         font-size: 3rem;
-        line-height: 170px;
     }
+
     @media screen and (max-width: $small) {
         font-size: 30rem;
-        line-height: 120px;
     }
 }
 
 p {
-    font-size: 30px;
-    margin-left: 10px;
+    font-size: 1rem;
+    margin-left: 1rem;
+
     @media screen and (max-width: $small) {
         font-size: 20px;
     }
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+
+    padding: 1rem 0;
+}
+
+.requiredFields,
+.optionalFields {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 20px;
 }
 
 .wrapper {
     position: relative;
     top: 50%;
     transform: translateY(-60%);
+}
+
+.inputWrapper {
+    padding: 1rem 0;
 }
 
 .App-logo {

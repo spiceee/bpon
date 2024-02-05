@@ -42,19 +42,24 @@ const Form: React.FC = () => {
         },
     });
 
-    const onSubmit = async (formData: any) => {};
+    const onSubmit = async (formData: any) => {
+        console.log(formData);
+    };
 
     return (
         <>
-            <h2>Informe sobre sua correspondência:</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <div>
+                <h2>Informe sobre sua correspondência:</h2>
+
+                <div className="requiredFields">
                     <div className="inputWrapper">
                         <label htmlFor="code">Código de rastreio*</label>
                         <input
                             {...register('code', {
                                 required: true,
+                                pattern: /[0-9A-Za-z]+/,
                             })}
+                            id="code"
                             type="text"
                             placeholder="NC123445965BR"
                             maxLength={13}
@@ -68,6 +73,7 @@ const Form: React.FC = () => {
                             {...register('reason', {
                                 required: false,
                             })}
+                            id="reason"
                         >
                             {REASONS.map(reason => (
                                 <option value={reason.code} key={reason.code}>
@@ -79,15 +85,17 @@ const Form: React.FC = () => {
                     </div>
                 </div>
 
-                <div>
+                <div className="optionalFields">
                     <div className="inputWrapper">
                         <label htmlFor="value_in_real">
-                            Valor estimado total em Reais
+                            Valor estimado total em Reais R$
                         </label>
                         <input
                             {...register('value_in_real', {
                                 required: false,
+                                pattern: /[0-9,\\.]+/,
                             })}
+                            id="value_in_real"
                             type="text"
                             placeholder="89,39"
                         />
@@ -103,6 +111,7 @@ const Form: React.FC = () => {
                                 required: false,
                             })}
                             defaultValue={DEFAULT}
+                            id="country_of_origin"
                         >
                             {COUNTRIES.map(country => (
                                 <option value={country.code} key={country.code}>
@@ -122,6 +131,7 @@ const Form: React.FC = () => {
                                 <select
                                     {...register('dopDay')}
                                     defaultValue={DEFAULT}
+                                    id="dopDay"
                                 >
                                     <option value={DEFAULT} disabled hidden>
                                         DD
