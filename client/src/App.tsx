@@ -17,7 +17,7 @@ const App: React.FC = () => {
       <>
          <Helmet>
             <meta charSet='utf-8' />
-            <title>Reactix</title>
+            <title>Importação Não Autorizada</title>
             <link rel='icon' type='image/png' href={favicon} />
          </Helmet>
          <img src={logo} className='App-logo' alt='logo' />
