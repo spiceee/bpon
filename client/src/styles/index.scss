@@ -6,104 +6,145 @@ $medium: 1650px;
 $small: 1120px;
 
 * {
-   margin: 0;
-   padding: 0;
-   box-sizing: border-box;
-   font-family: $poppins;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: $poppins;
+    font-size: 16px;
 }
 
 #root {
-   height: 100vh;
-   width: 100%;
-   position: absolute;
-   overflow: hidden;
+    height: 100vh;
+    width: 100%;
+    position: absolute;
+    overflow: hidden;
 }
 
 h1 {
-   font-size: 200px;
-   font-weight: 900;
-   line-height: 220px;
-   margin-left: 10px;
-   @media screen and (max-width: $medium) {
-      font-size: 150px;
-      line-height: 170px;
-   }
-   @media screen and (max-width: $small) {
-      font-size: 100px;
-      line-height: 120px;
-   }
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 220px;
+    margin-left: 10px;
+    @media screen and (max-width: $medium) {
+        font-size: 3rem;
+        line-height: 170px;
+    }
+    @media screen and (max-width: $small) {
+        font-size: 30rem;
+        line-height: 120px;
+    }
 }
 
 p {
-   font-size: 30px;
-   margin-left: 10px;
-   @media screen and (max-width: $small) {
-      font-size: 20px;
-   }
+    font-size: 30px;
+    margin-left: 10px;
+    @media screen and (max-width: $small) {
+        font-size: 20px;
+    }
 }
 
 .wrapper {
-   position: relative;
-   top: 50%;
-   transform: translateY(-60%);
+    position: relative;
+    top: 50%;
+    transform: translateY(-60%);
 }
 
 .App-logo {
-   position: fixed;
-   width: 1000px;
-   top: -400px;
-   right: -400px;
-   @media screen and (max-width: $medium) {
-      width: 500px;
-      top: -150px;
-      right: -150px;
-   }
+    position: fixed;
+    width: 1000px;
+    top: -400px;
+    right: -400px;
+    @media screen and (max-width: $medium) {
+        width: 500px;
+        top: -150px;
+        right: -150px;
+    }
 }
 
 .link,
 .counter {
-   font-size: 20px;
-   padding: 15px 25px;
-   background-color: black;
-   color: white;
-   position: relative;
-   margin-left: 10px;
-   margin-top: 20px;
-   border: none;
-   outline: none;
-   cursor: pointer;
-   text-decoration: none;
+    font-size: 20px;
+    padding: 15px 25px;
+    background-color: black;
+    color: white;
+    position: relative;
+    margin-left: 10px;
+    margin-top: 20px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    text-decoration: none;
 }
 
 .link {
-   border: 1px black solid;
-   transition: 0.3s;
+    border: 1px black solid;
+    transition: 0.3s;
 
-   &:hover {
-      background-color: white;
-      color: black;
-      transition: 0.3s;
-   }
+    &:hover {
+        background-color: white;
+        color: black;
+        transition: 0.3s;
+    }
 }
 
 nav {
-   position: fixed;
-   height: 100px;
-   width: 100%;
+    position: fixed;
+    height: 100px;
+    width: 100%;
 }
 
 nav ul {
-   display: flex;
-   list-style-type: none;
-   padding: 25px;
-   margin-top: 10px;
+    display: flex;
+    list-style-type: none;
+    padding: 25px;
+    margin-top: 10px;
 }
 
 nav ul li {
-   margin-right: 25px;
-   font-size: 20px;
+    margin-right: 25px;
+    font-size: 20px;
 }
 
 nav ul li a {
-   color: black;
+    color: black;
+}
+
+.envelope:before {
+    border-radius: 10px 10px 0 0;
+    content: '';
+    background-image: repeating-linear-gradient(
+        -45deg,
+        white 0px,
+        white 15px,
+        #32cd32 15px,
+        #32cd32 30px,
+        white 30px,
+        white 45px,
+        #ffff00 45px,
+        #ffff00 60px
+    );
+    width: 100%;
+    height: 8px;
+    position: absolute;
+    top: 0px;
+}
+
+.envelope:after {
+    border-radius: 0px 0px 10px 10px;
+    content: '';
+    background-image: repeating-linear-gradient(
+        -45deg,
+        white 0px,
+        white 15px,
+        #32cd32 15px,
+        #32cd32 30px,
+        white 30px,
+        white 45px,
+        #ffff00 45px,
+        #ffff00 60px
+    );
+    width: 100%;
+    height: 8px;
+    position: absolute;
+    bottom: 0;
 }
