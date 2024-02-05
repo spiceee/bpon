@@ -101,9 +101,14 @@ mod models {
     #[pg_mapper(table = "tracking_codes")]
     pub struct TrackingCode {
         pub code: String,
+        pub reason: String,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
         pub user_id: i32,
+        pub country_of_origin: String,
+        pub date_of_postage: DateTime<Utc>,
+        pub value_in_real: f64,
+        pub reimbursed: bool,
     }
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone)]
@@ -124,11 +129,6 @@ mod models {
     pub struct UserProfile {
         pub user: User,
         pub tracking_codes: Vec<TrackingCode>,
-        pub reason: String,
-        pub country_of_origin: String,
-        pub date_of_postage: DateTime<Utc>,
-        pub value_in_real: f64,
-        pub reimbursed: bool,
     }
 }
 

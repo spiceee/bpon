@@ -18,7 +18,17 @@
       "sourceType": "module"
    },
    "plugins": ["react", "@typescript-eslint"],
-   "rules": {},
+   "rules": {
+      "no-empty": 0,
+      "no-unused-vars": "warn",
+      "react/display-name": 0,
+      "react/no-unknown-property": [
+         "warn",
+         { "ignore": ["gtm-id", "gtm-label"] }
+      ],
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn"
+   },
    "settings": {
       "react": {
          "version": "detect"
