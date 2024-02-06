@@ -218,7 +218,7 @@ mod db {
     pub async fn add_tracking_code(
         client: &Client,
         code_info: TrackingCode,
-    ) -> Result<User, MyError> {
+    ) -> Result<TrackingCode, MyError> {
         let _stmt = include_str!("../sql/add_tracking_code.sql");
         let _stmt = _stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
         let stmt = client.prepare(&_stmt).await.unwrap();
@@ -236,8 +236,8 @@ mod db {
             )
             .await?
             .iter()
-            .map(|row| User::from_row_ref(row).unwrap())
-            .collect::<Vec<User>>()
+            .map(|row| TrackingCode::from_row_ref(row).unwrap())
+            .collect::<Vec<TrackingCode>>()
             .pop()
             .ok_or(MyError::NotFound) // more applicable for SELECTs
     }
