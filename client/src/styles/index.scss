@@ -133,7 +133,7 @@ nav ul li a {
     color: black;
 }
 
-.envelope:before {
+#root:before {
     border-radius: 10px 10px 0 0;
     content: '';
     background-image: repeating-linear-gradient(
@@ -153,7 +153,7 @@ nav ul li a {
     top: 0px;
 }
 
-.envelope:after {
+#root:after {
     border-radius: 0px 0px 10px 10px;
     content: '';
     background-image: repeating-linear-gradient(

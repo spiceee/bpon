@@ -1,0 +1,6 @@
+# Build plan from the provider
+[phases.setup]
+nixPkgs = ['binutils', 'gcc', 'rust-bin.stable.latest.default', 'nodejs_16']
+
+[phases.build]
+cmds = ['cd client/ && npm i && npm run build', 'mkdir -p bin', 'cargo build --release', 'cp target/release/bpon bin']

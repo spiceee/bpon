@@ -42,7 +42,6 @@ tokio-stream = "0.1.1"
 refinery = { version = "0.8.12", features = ["tokio-postgres"] }
 barrel = { version = "0.7.0", features = ["pg"] }
 
-
 derive_more = "0.99.7"
 chrono = { version = "0.4.20", default-features = false, features = ["clock", "serde"] }
 dotenvy = "0.15"
