@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 
@@ -42,10 +42,37 @@ const Form: React.FC = () => {
             dopMon: DEFAULT,
             dopDay: DEFAULT,
             dopYear: DEFAULT,
-            value_in_real: 0,
+            value_in_real: null,
             reimbursed: null,
         },
     });
+
+    const submitPayload = useCallback(async formData => {
+        const result = await fetch('./codes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cf_challenge: formData.cf_challenge,
+                tracking_code: {
+                    code: formData.code,
+                    reason: formData.reason,
+                    country_of_origin: formData.reason,
+                    date_of_postage: formData.date_of_postage ?? null,
+                    value_in_real:
+                        formData?.value_in_real &&
+                        parseInt(
+                            formData.value_in_real.replace(/^R\$(\s?)/, '')
+                        ),
+                    reimbursed: formData.reimbursed ?? false,
+                },
+            }),
+        });
+
+        const body = await result.json();
+        return body;
+    }, []);
 
     register('cf_challenge');
     // watch('cf_challenge');
@@ -76,12 +103,9 @@ const Form: React.FC = () => {
         const amount =
             formData?.value_in_real?.replace(/\./g, '')?.replace(/,/g, '.') ||
             '';
-        amount &&
-            setValue(
-                'value_in_real',
-                parseInt(amount.replace(/^R\$(\s?)/, ''))
-            );
-        console.log(formData, values, getValues());
+        amount && setValue('value_in_real', amount);
+
+        await submitPayload(getValues());
     };
 
     return (
