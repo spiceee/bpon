@@ -300,6 +300,7 @@ use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
 use handlers::{add_user, get_tracking_codes, get_users};
+// use std::env;
 use std::fs::read_to_string;
 use std::sync::Mutex;
 use tokio_postgres::NoTls;
@@ -318,6 +319,9 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     let config: ExampleConfig = config_.try_deserialize().unwrap();
+
+    println!("{:?}", config);
+
     let pool = config.pg.create_pool(None, NoTls).unwrap();
 
     // Perform migrations

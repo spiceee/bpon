@@ -1,9 +1,11 @@
 # Build plan from the provider
 [phases.setup]
+cmds = ['./touch_env.sh']
+onlyIncludeFiles = ['./touch_env.sh']
 nixPkgs = ['nodejs_16', 'binutils', 'gcc', 'curl', 'bash', 'rust-bin.stable.latest.default']
 
 [phases.install]
-cmds = ['./touch_env.sh', 'cd client/ && npm i']
+cmds = ['cd client/ && npm i']
 
 [phases.build]
 dependsOn = ['install']
