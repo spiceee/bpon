@@ -1,6 +1,10 @@
 # Build plan from the provider
 [phases.setup]
-nixPkgs = ['nodejs_16', 'binutils', 'gcc', 'curl', 'rust-bin.stable.latest.default']
+nixPkgs = ['nodejs_16', 'binutils', 'gcc', 'curl', 'bash', 'rust-bin.stable.latest.default']
+
+[phases.install]
+cmds = ['./touch_env.sh', 'cd client/ && npm i']
 
 [phases.build]
-cmds = ['cd client/ && npm i && NODE_OPTIONS=--openssl-legacy-provider npm run build', './touch_env.sh', 'mkdir -p bin', 'cargo build --release', 'cp target/release/bpon bin']
+dependsOn = ['install']
+cmds = ['cd client/ && NODE_OPTIONS=--openssl-legacy-provider npm run build', 'mkdir -p bin', 'cargo build --release', 'cp target/release/bpon bin']
