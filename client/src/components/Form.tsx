@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import Turnstile, { useTurnstile } from 'react-turnstile';
 
 import {
     DEFAULT,
@@ -24,6 +25,9 @@ const formStates = Object.freeze({
 
 const Form: React.FC = () => {
     const [formState, setFormState] = useState(formStates.INITIAL);
+
+    const turnstile = useTurnstile();
+
     const {
         handleSubmit,
         setValue,
@@ -75,21 +79,9 @@ const Form: React.FC = () => {
     }, []);
 
     register('cf_challenge');
-    // watch('cf_challenge');
     watch('value_in_real');
 
-    const setCFToken = () => {
-        const token =
-            document
-                .getElementsByClassName('cf-turnstile')?.[0]
-                ?.getAttribute('data-sitekey') || '';
-
-        setValue('cf_challenge', token);
-    };
-
     const onSubmit = async (formData: any) => {
-        setCFToken();
-
         const values = getValues(['dopDay', 'dopMon', 'dopYear']);
         values.every(values => values !== DEFAULT) &&
             setValue(
@@ -109,6 +101,14 @@ const Form: React.FC = () => {
 
     return (
         <>
+            <Turnstile
+                sitekey={PUBLIC_CAPTCHA_SITE_KEY}
+                onVerify={token => {
+                    console.log('token', token);
+                    setValue('cf_challenge', token);
+                }}
+            />
+
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="requiredFields">
                     <h1>Contribua com informação sobre sua encomenda:</h1>
