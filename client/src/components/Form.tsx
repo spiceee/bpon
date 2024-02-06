@@ -69,7 +69,7 @@ const Form: React.FC = () => {
                         parseInt(
                             formData.value_in_real.replace(/^R\$(\s?)/, '')
                         ),
-                    reimbursed: formData.reimbursed ?? false,
+                    reimbursed: formData.reimbursed ? true : false,
                 },
             }),
         });

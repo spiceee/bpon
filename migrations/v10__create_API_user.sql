@@ -1,0 +1,1 @@
+INSERT INTO bpon_dev.users('api.user', 'API', 'USER', 'API') VALUES ($1, $2, $3, $4);

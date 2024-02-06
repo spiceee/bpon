@@ -94,6 +94,7 @@ mod config {
 mod models {
     use chrono::{DateTime, Utc};
     use postgres::Row;
+    use rust_decimal::Decimal;
     use serde::{Deserialize, Serialize};
     use tokio_pg_mapper_derive::PostgresMapper;
 
@@ -104,10 +105,10 @@ mod models {
         pub reason: String,
         // pub created_at: DateTime<Utc>,
         // pub updated_at: DateTime<Utc>,
-        // pub user_id: i32,
+        pub user_id: i32,
         pub country_of_origin: String,
         pub date_of_postage: DateTime<Utc>,
-        pub value_in_real: f64,
+        pub value_in_real: Decimal,
         pub reimbursed: bool,
     }
 
@@ -217,29 +218,46 @@ mod db {
     // (reason, country_of_origin, date_of_postage, value_in_real, reimbursed)
     pub async fn add_tracking_code(
         client: &Client,
-        code_info: TrackingCode,
+        mut code_info: TrackingCode,
     ) -> Result<TrackingCode, MyError> {
+        code_info.user_id = 1;
+
         let _stmt = include_str!("../sql/add_tracking_code.sql");
         let _stmt = _stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
-        let stmt = client.prepare(&_stmt).await.unwrap();
 
-        client
+        println!("{_stmt:?}");
+        let stmt = client.prepare(&_stmt).await.unwrap();
+        println!("{code_info:?}");
+
+        let query = client
             .query(
                 &stmt,
                 &[
+                    &code_info.code,
                     &code_info.reason,
                     &code_info.country_of_origin,
                     &code_info.date_of_postage,
                     &code_info.value_in_real,
                     &code_info.reimbursed,
+                    &code_info.user_id,
                 ],
             )
-            .await?
-            .iter()
-            .map(|row| TrackingCode::from_row_ref(row).unwrap())
-            .collect::<Vec<TrackingCode>>()
-            .pop()
-            .ok_or(MyError::NotFound) // more applicable for SELECTs
+            .await;
+
+        println!("{code_info:?}");
+        println!("{query:?}");
+
+        let _fake_tracking_code: TrackingCode = todo!();
+
+        // query
+        //     .iter()
+        //     .map(|row| {
+        //         println!("{row:?}");
+        //         TrackingCode::from_row_ref(row).unwrap()
+        //     })
+        //     .collect::<Vec<TrackingCode>>()
+        //     .pop()
+        //     .ok_or(MyError::NotFound) // more applicable for SELECTs
     }
 
     pub async fn get_tracking_codes(
@@ -343,6 +361,7 @@ mod handlers {
             Ok(_) => {
                 let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
+                println!("HEY!!!");
                 let new_code = db::add_tracking_code(&client, code_info).await?;
                 Ok(HttpResponse::Ok().json(new_code))
             }
