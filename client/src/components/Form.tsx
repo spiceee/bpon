@@ -42,30 +42,45 @@ const Form: React.FC = () => {
             dopMon: DEFAULT,
             dopDay: DEFAULT,
             dopYear: DEFAULT,
-            value_in_real: null,
+            value_in_real: 0,
             reimbursed: null,
         },
     });
 
     register('cf_challenge');
-    watch('cf_challenge');
+    // watch('cf_challenge');
+    watch('value_in_real');
 
-    const onSubmit = async (formData: any) => {
+    const setCFToken = () => {
         const token =
             document
                 .getElementsByClassName('cf-turnstile')?.[0]
-                ?.getAttribute('data-cf-token') || '';
+                ?.getAttribute('data-sitekey') || '';
 
         console.log('token', token);
         setValue('cf_challenge', token);
+    };
 
+    const onSubmit = async (formData: any) => {
+        setCFToken();
         const values = getValues(['dopDay', 'dopMon', 'dopYear']);
+
         values.every(values => values !== DEFAULT) &&
             setValue(
                 'date_of_postage',
-                `${values[2]}-${values[1]}-${values[0]}`
+                new Date(
+                    `${formData.dopYear}-${formData.dopMon}-${formData.dopDay}`
+                ).toISOString()
             );
 
+        const amount =
+            formData?.value_in_real?.replace(/\./g, '')?.replace(/,/g, '.') ||
+            '';
+        amount &&
+            setValue(
+                'value_in_real',
+                parseInt(amount.replace(/^R\$(\s?)/, ''))
+            );
         console.log(formData, values, getValues());
     };
 

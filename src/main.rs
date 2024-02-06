@@ -97,22 +97,21 @@ mod models {
     use serde::{Deserialize, Serialize};
     use tokio_pg_mapper_derive::PostgresMapper;
 
-    #[derive(Deserialize, PostgresMapper, Serialize, Clone)]
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "tracking_codes")]
     pub struct TrackingCode {
         pub code: String,
         pub reason: String,
-        pub created_at: DateTime<Utc>,
-        pub updated_at: DateTime<Utc>,
-        pub user_id: i32,
+        // pub created_at: DateTime<Utc>,
+        // pub updated_at: DateTime<Utc>,
+        // pub user_id: i32,
         pub country_of_origin: String,
         pub date_of_postage: DateTime<Utc>,
         pub value_in_real: f64,
         pub reimbursed: bool,
-        pub cf_challenge: String,
     }
 
-    #[derive(Deserialize, PostgresMapper, Serialize, Clone)]
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "users")] // singular 'user' is a keyword
     pub struct User {
         pub id: i32,
@@ -130,6 +129,12 @@ mod models {
     pub struct UserProfile {
         pub user: User,
         pub tracking_codes: Vec<TrackingCode>,
+    }
+
+    #[derive(Deserialize, Serialize, Clone, Debug)]
+    pub struct CodePayload {
+        pub cf_challenge: String,
+        pub tracking_code: TrackingCode,
     }
 }
 
@@ -262,9 +267,9 @@ mod handlers {
     use crate::{
         db,
         errors::MyError,
-        models::{TrackingCode, User, UserProfile},
+        models::{CodePayload, TrackingCode, User, UserProfile},
     };
-    use actix_web::{web, Error, HttpResponse};
+    use actix_web::{web, Error, HttpRequest, HttpResponse};
     use cf_turnstile::{SiteVerifyRequest, TurnstileClient};
     use deadpool_postgres::{Client, Pool};
     use std::env;
@@ -302,26 +307,49 @@ mod handlers {
     }
 
     pub async fn add_tracking_code(
-        code: web::Json<TrackingCode>,
+        payload: web::Json<CodePayload>,
         db_pool: web::Data<Pool>,
+        req: HttpRequest,
     ) -> Result<HttpResponse, Error> {
-        let code_info: TrackingCode = code.into_inner();
+        println!("{payload:?}");
+
+        let code_info: TrackingCode = payload.tracking_code.clone();
+        let challenge = payload.cf_challenge.clone();
+        let remote_ip = req.connection_info().peer_addr().unwrap().to_string();
+
+        println!("{code_info:?}");
 
         let captcha_secret = env::var("PRIVATE_CATPCHA_SECRET").expect("Missing secret");
+
+        println!("{captcha_secret}");
+        println!("{}", remote_ip);
+
         let client = TurnstileClient::new(captcha_secret.to_string().into());
-        let _validated = client
+        let validated = client
             .siteverify(SiteVerifyRequest {
-                response: "myresponse".to_string(),
-                ..Default::default()
+                response: challenge,
+                remote_ip: Some(remote_ip),
+                secret: captcha_secret.to_string().into(),
             })
             .await;
-        println!("{_validated:?}");
 
-        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+        match validated {
+            Ok(_) => {
+                let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
-        let new_user = db::add_tracking_code(&client, code_info).await?;
+                let new_code = db::add_tracking_code(&client, code_info).await?;
+                Ok(HttpResponse::Ok().json(new_code))
+            }
+            Err(_) => {
+                println!("{validated:?}");
+                Ok(HttpResponse::Forbidden().finish())
+            }
+        }
 
-        Ok(HttpResponse::Ok().json(new_user))
+        // match validated.success {
+        //     Ok(_) => Ok::<HttpResponse, E>(HttpResponse::Ok().json(new_user)),
+        //     Err(_) =>
+        // };
     }
 }
 
