@@ -10,9 +10,9 @@
 # PG.DBNAME=bpon_dev
 # PG.POOL.MAX_SIZE=16
 
-echo 'SERVER_ADDR=localhost:8080' >>.env.production
-echo "PG.USER=$PGUSER" >>.env.production
-echo "PG.PASSWORD=$POSTGRES_PASSWORD" >>.env.production
-echo "PG.HOST=$PGHOST" >>.env.production
-echo "PG.PORT=$PGPORT" >>.env.production
-echo "PG.DBNAME=$PGDATABASE" >>.env.production
+echo 'SERVER_ADDR=localhost:8080' >>'.env'
+echo "PG.USER=$PGUSER" >>'.env'
+echo "PG.PASSWORD=$POSTGRES_PASSWORD" >>'.env'
+echo "PG.HOST=$PGHOST" >>'.env'
+echo "PG.PORT=$PGPORT" >>'.env'
+echo "PG.DBNAME=$PGDATABASE" >>'.env'
