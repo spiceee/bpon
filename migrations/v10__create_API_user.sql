@@ -1,1 +1,1 @@
-INSERT INTO bpon_dev.users('api.user', 'API', 'USER', 'API') VALUES ($1, $2, $3, $4);
+INSERT INTO bpon_dev.users(email, first_name, last_name, username) VALUES ('ouvidoria@importacaonaoautorizada.com', 'API', 'USER', 'api_user');

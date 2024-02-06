@@ -105,7 +105,7 @@ mod models {
         pub reason: String,
         // pub created_at: DateTime<Utc>,
         // pub updated_at: DateTime<Utc>,
-        pub user_id: i32,
+        // pub user_id: i32,
         pub country_of_origin: String,
         pub date_of_postage: DateTime<Utc>,
         pub value_in_real: Decimal,
@@ -218,10 +218,8 @@ mod db {
     // (reason, country_of_origin, date_of_postage, value_in_real, reimbursed)
     pub async fn add_tracking_code(
         client: &Client,
-        mut code_info: TrackingCode,
+        code_info: TrackingCode,
     ) -> Result<TrackingCode, MyError> {
-        code_info.user_id = 1;
-
         let _stmt = include_str!("../sql/add_tracking_code.sql");
         let _stmt = _stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
 
@@ -239,7 +237,6 @@ mod db {
                     &code_info.date_of_postage,
                     &code_info.value_in_real,
                     &code_info.reimbursed,
-                    &code_info.user_id,
                 ],
             )
             .await;
