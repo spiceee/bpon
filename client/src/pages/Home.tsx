@@ -8,7 +8,6 @@ const Home: React.FC = () => {
     return (
         <>
             <div className="wrapper envelope">
-                <h1>Importação Não Autorizada</h1>
                 <Form />
                 <div
                     className="cf-turnstile"

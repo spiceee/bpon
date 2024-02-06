@@ -109,6 +109,7 @@ mod models {
         pub date_of_postage: DateTime<Utc>,
         pub value_in_real: f64,
         pub reimbursed: bool,
+        pub cf_challenge: String,
     }
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone)]
@@ -208,6 +209,34 @@ mod db {
             .ok_or(MyError::NotFound) // more applicable for SELECTs
     }
 
+    // (reason, country_of_origin, date_of_postage, value_in_real, reimbursed)
+    pub async fn add_tracking_code(
+        client: &Client,
+        code_info: TrackingCode,
+    ) -> Result<User, MyError> {
+        let _stmt = include_str!("../sql/add_tracking_code.sql");
+        let _stmt = _stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
+        let stmt = client.prepare(&_stmt).await.unwrap();
+
+        client
+            .query(
+                &stmt,
+                &[
+                    &code_info.reason,
+                    &code_info.country_of_origin,
+                    &code_info.date_of_postage,
+                    &code_info.value_in_real,
+                    &code_info.reimbursed,
+                ],
+            )
+            .await?
+            .iter()
+            .map(|row| User::from_row_ref(row).unwrap())
+            .collect::<Vec<User>>()
+            .pop()
+            .ok_or(MyError::NotFound) // more applicable for SELECTs
+    }
+
     pub async fn get_tracking_codes(
         client: &Client,
         user_id: i32,
@@ -269,6 +298,19 @@ mod handlers {
 
         Ok(HttpResponse::Ok().json(new_user))
     }
+
+    pub async fn add_tracking_code(
+        code: web::Json<TrackingCode>,
+        db_pool: web::Data<Pool>,
+    ) -> Result<HttpResponse, Error> {
+        let code_info: TrackingCode = code.into_inner();
+
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+        let new_user = db::add_tracking_code(&client, code_info).await?;
+
+        Ok(HttpResponse::Ok().json(new_user))
+    }
 }
 
 async fn default_handler(req_method: Method) -> Result<impl Responder> {
@@ -299,7 +341,7 @@ async fn response_body(path: web::Path<String>) -> HttpResponse {
 use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
-use handlers::{add_user, get_tracking_codes, get_users};
+use handlers::{add_tracking_code, add_user, get_tracking_codes, get_users};
 use std::env;
 use std::fs::read_to_string;
 use std::sync::Mutex;
@@ -354,6 +396,7 @@ async fn main() -> std::io::Result<()> {
                     .route(web::post().to(add_user))
                     .route(web::get().to(get_users)),
             )
+            .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             // .service(
             //     web::resource("/").route(web::get().to(|req: HttpRequest| async move {
             //         println!("{req:?}");

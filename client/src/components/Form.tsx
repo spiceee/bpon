@@ -9,6 +9,7 @@ import {
     MONTHS,
     YEARS,
     REASONS,
+    PUBLIC_CAPTCHA_SITE_KEY,
 } from '../utils/constants';
 
 import Money from './ui/Money';
@@ -26,6 +27,7 @@ const Form: React.FC = () => {
     const {
         handleSubmit,
         setValue,
+        getValues,
         reset,
         watch,
         register,
@@ -33,6 +35,7 @@ const Form: React.FC = () => {
     } = useForm({
         defaultValues: {
             code: '',
+            cf_challenge: '',
             reason: REASONS[0].code,
             country_of_origin: DEFAULT,
             date_of_postage: DEFAULT,
@@ -44,14 +47,31 @@ const Form: React.FC = () => {
         },
     });
 
+    register('cf_challenge');
+
     const onSubmit = async (formData: any) => {
-        console.log(formData);
+        const token =
+            document
+                .getElementsByClassName('cf-turnstile')?.[0]
+                ?.getAttribute('data-cf-token') || '';
+
+        console.log('token', token);
+        setValue('cf_challenge', token);
+
+        const values = getValues(['dopDay', 'dopMon', 'dopYear']);
+        values.every(values => values !== DEFAULT) &&
+            setValue(
+                'date_of_postage',
+                `${values[2]}-${values[1]}-${values[0]}`
+            );
+
+        console.log(formData, values, getValues());
     };
 
     return (
         <>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <h2>Contribua com informação sobre sua encomenda</h2>
+                <h1>Contribua com informação sobre sua encomenda:</h1>
 
                 <div className="requiredFields">
                     <div className="inputWrapper">
@@ -71,7 +91,7 @@ const Form: React.FC = () => {
                     </div>
 
                     <div className="inputWrapper">
-                        <label htmlFor="reason">Razão da devolução</label>
+                        <label htmlFor="reason">Razão da devolução*</label>
                         <select
                             {...register('reason', {
                                 required: false,
@@ -85,7 +105,7 @@ const Form: React.FC = () => {
                             ))}
                         </select>
                         <div className="notes">
-                            Selecione Outros casa tenha dúvida
+                            Selecione OUTRAS casa tenha dúvida
                         </div>
                         <div className="error"></div>
                     </div>
