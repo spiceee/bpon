@@ -20,6 +20,7 @@ coverage
 .vscode
 
 .env
+.env.production
 
 /node_modules
 client/node_modules
