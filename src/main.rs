@@ -315,7 +315,11 @@ mod handlers {
 
         let code_info: TrackingCode = payload.tracking_code.clone();
         let challenge = payload.cf_challenge.clone();
-        let remote_ip = req.connection_info().peer_addr().unwrap().to_string();
+        let remote_ip = req
+            .connection_info()
+            .realip_remote_addr()
+            .unwrap()
+            .to_string();
 
         println!("{code_info:?}");
 
