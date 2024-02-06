@@ -11,7 +11,7 @@
 # PG.POOL.MAX_SIZE=16
 
 echo "==========================="
-echo 'SERVER_ADDR=localhost:8080' >>'.env'
+echo "SERVER_ADDR=localhost:$PORT" >>'.env'
 echo "PG.USER=$PGUSER" >>'.env'
 echo "PG.PASSWORD=$POSTGRES_PASSWORD" >>'.env'
 echo "PG.HOST=$PGHOST" >>'.env'
