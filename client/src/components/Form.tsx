@@ -84,14 +84,13 @@ const Form: React.FC = () => {
                 .getElementsByClassName('cf-turnstile')?.[0]
                 ?.getAttribute('data-sitekey') || '';
 
-        console.log('token', token);
         setValue('cf_challenge', token);
     };
 
     const onSubmit = async (formData: any) => {
         setCFToken();
-        const values = getValues(['dopDay', 'dopMon', 'dopYear']);
 
+        const values = getValues(['dopDay', 'dopMon', 'dopYear']);
         values.every(values => values !== DEFAULT) &&
             setValue(
                 'date_of_postage',
@@ -212,7 +211,7 @@ const Form: React.FC = () => {
                                         </option>
                                     ))}
                                 </select>
-
+                                {' / '}
                                 <select
                                     {...register('dopMon')}
                                     defaultValue={DEFAULT}
@@ -226,7 +225,7 @@ const Form: React.FC = () => {
                                         </option>
                                     ))}
                                 </select>
-
+                                {' / '}
                                 <select
                                     {...register('dopYear')}
                                     defaultValue={DEFAULT}
