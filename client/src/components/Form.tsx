@@ -11,6 +11,8 @@ import {
     REASONS,
 } from '../utils/constants';
 
+import Money from './ui/Money';
+
 const formStates = Object.freeze({
     SUCCESS: 'SUCCESS',
     INITIAL: 'INITIAL',
@@ -49,7 +51,7 @@ const Form: React.FC = () => {
     return (
         <>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <h2>Informe sobre sua correspondência:</h2>
+                <h2>Contribua com informação sobre sua encomenda</h2>
 
                 <div className="requiredFields">
                     <div className="inputWrapper">
@@ -64,6 +66,7 @@ const Form: React.FC = () => {
                             placeholder="NC123445965BR"
                             maxLength={13}
                         />
+                        <div className="notes">O código tem 13 caracteres.</div>
                         <div className="error"></div>
                     </div>
 
@@ -81,6 +84,9 @@ const Form: React.FC = () => {
                                 </option>
                             ))}
                         </select>
+                        <div className="notes">
+                            Selecione Outros casa tenha dúvida
+                        </div>
                         <div className="error"></div>
                     </div>
                 </div>
@@ -90,15 +96,15 @@ const Form: React.FC = () => {
                         <label htmlFor="value_in_real">
                             Valor estimado total em Reais R$
                         </label>
-                        <input
-                            {...register('value_in_real', {
-                                required: false,
-                                pattern: /[0-9,\\.]+/,
-                            })}
-                            id="value_in_real"
-                            type="text"
-                            placeholder="89,39"
+                        <Money
+                            register={register}
+                            setValue={setValue}
+                            fieldName="value_in_real"
                         />
+                        <div className="notes">
+                            Usaremos essa informação para calcular o prejuízo
+                            total
+                        </div>
                         <div className="error"></div>
                     </div>
 
@@ -119,6 +125,10 @@ const Form: React.FC = () => {
                                 </option>
                             ))}
                         </select>
+                        <div className="notes">
+                            Usaremos essa informação para calcular a quantidade
+                            de poluição que a devolução causou ao planeta
+                        </div>
                         <div className="error"></div>
                     </div>
 
@@ -186,6 +196,9 @@ const Form: React.FC = () => {
                             value="reimbursed"
                         />
                         <div className="error"></div>
+                        <div className="notes">
+                            Clique caso tenha conseguido reaver seu dinheiro
+                        </div>
                     </div>
                 </div>
 

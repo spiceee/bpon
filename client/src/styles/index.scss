@@ -54,12 +54,16 @@ form {
     padding: 1rem 0;
 }
 
+label {
+    padding: 0 1rem 0 0;
+}
+
 .requiredFields,
 .optionalFields {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
+    justify-content: center;
+    align-items: flex-start;
     margin-top: 20px;
 }
 
@@ -71,6 +75,11 @@ form {
 
 .inputWrapper {
     padding: 1rem 0;
+}
+
+.notes {
+    font-size: 0.8rem;
+    color: gray;
 }
 
 .App-logo {
