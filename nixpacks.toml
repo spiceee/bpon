@@ -1,6 +1,7 @@
+buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1705968199'
+
 # Build plan from the provider
 [phases.setup]
-buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1705968199'
 cmds = ['./touch_env.sh']
 onlyIncludeFiles = ['./touch_env.sh']
 nixPkgs = ['nodejs_16', 'binutils', 'gcc', 'curl', 'bash', 'rust-bin.stable.latest.default']
