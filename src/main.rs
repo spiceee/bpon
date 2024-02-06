@@ -325,13 +325,15 @@ mod handlers {
         println!("{}", remote_ip);
 
         let client = TurnstileClient::new(captcha_secret.to_string().into());
-        let validated = client
-            .siteverify(SiteVerifyRequest {
-                response: challenge,
-                remote_ip: Some(remote_ip),
-                secret: captcha_secret.to_string().into(),
-            })
-            .await;
+        let verify_req = SiteVerifyRequest {
+            response: challenge,
+            remote_ip: Some(remote_ip),
+            secret: captcha_secret.to_string().into(),
+        };
+
+        println!("{:?}", verify_req);
+
+        let validated = client.siteverify(verify_req).await;
 
         match validated {
             Ok(_) => {

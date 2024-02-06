@@ -58,7 +58,7 @@ const Form: React.FC = () => {
                 tracking_code: {
                     code: formData.code,
                     reason: formData.reason,
-                    country_of_origin: formData.reason,
+                    country_of_origin: formData.country_of_origin,
                     date_of_postage: formData.date_of_postage ?? null,
                     value_in_real:
                         formData?.value_in_real &&
