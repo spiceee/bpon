@@ -10,13 +10,9 @@
 # PG.DBNAME=bpon_dev
 # PG.POOL.MAX_SIZE=16
 
-echo "==========================="
 echo "SERVER_ADDR=0.0.0.0" >>'.env'
 echo "PG.USER=$PGUSER" >>'.env'
 echo "PG.PASSWORD=$POSTGRES_PASSWORD" >>'.env'
 echo "PG.HOST=$PGHOST" >>'.env'
 echo "PG.PORT=$PGPORT" >>'.env'
 echo "PG.DBNAME=$PGDATABASE" >>'.env'
-
-cat .env
-echo "==========================="
