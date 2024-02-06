@@ -48,6 +48,7 @@ const Form: React.FC = () => {
     });
 
     register('cf_challenge');
+    watch('cf_challenge');
 
     const onSubmit = async (formData: any) => {
         const token =
@@ -71,9 +72,9 @@ const Form: React.FC = () => {
     return (
         <>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <h1>Contribua com informação sobre sua encomenda:</h1>
-
                 <div className="requiredFields">
+                    <h1>Contribua com informação sobre sua encomenda:</h1>
+
                     <div className="inputWrapper">
                         <label htmlFor="code">Código de rastreio*</label>
                         <input
@@ -213,7 +214,7 @@ const Form: React.FC = () => {
                                 required: false,
                             })}
                             type="checkbox"
-                            value="reimbursed"
+                            value="true"
                         />
                         <div className="error"></div>
                         <div className="notes">

@@ -70,6 +70,7 @@ label {
     justify-content: center;
     align-items: flex-start;
     margin-top: 20px;
+    min-width: 50%;
 }
 
 .wrapper {
@@ -89,6 +90,8 @@ label {
 .notes {
     font-size: 0.8rem;
     color: gray;
+
+    padding-top: 0.5rem;
 }
 
 .App-logo {

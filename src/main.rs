@@ -265,7 +265,9 @@ mod handlers {
         models::{TrackingCode, User, UserProfile},
     };
     use actix_web::{web, Error, HttpResponse};
+    use cf_turnstile::{SiteVerifyRequest, TurnstileClient};
     use deadpool_postgres::{Client, Pool};
+    use std::env;
 
     pub async fn get_tracking_codes(
         db_pool: web::Data<Pool>,
@@ -304,6 +306,16 @@ mod handlers {
         db_pool: web::Data<Pool>,
     ) -> Result<HttpResponse, Error> {
         let code_info: TrackingCode = code.into_inner();
+
+        let captcha_secret = env::var("PRIVATE_CATPCHA_SECRET").expect("Missing secret");
+        let client = TurnstileClient::new(captcha_secret.to_string().into());
+        let _validated = client
+            .siteverify(SiteVerifyRequest {
+                response: "myresponse".to_string(),
+                ..Default::default()
+            })
+            .await;
+        println!("{_validated:?}");
 
         let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
