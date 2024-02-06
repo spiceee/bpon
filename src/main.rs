@@ -300,7 +300,7 @@ use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
 use handlers::{add_user, get_tracking_codes, get_users};
-// use std::env;
+use std::env;
 use std::fs::read_to_string;
 use std::sync::Mutex;
 use tokio_postgres::NoTls;
@@ -327,6 +327,9 @@ async fn main() -> std::io::Result<()> {
     // Perform migrations
     let mut conn = pool.get().await.unwrap();
     let client = conn.deref_mut();
+
+    let port = env::var("PORT").expect("Missing port number");
+    let port = port.parse::<u16>().expect("Invalid port given");
 
     let migration_report = embedded::migrations::runner()
         .run_async(client.deref_mut())
@@ -367,7 +370,7 @@ async fn main() -> std::io::Result<()> {
             .default_service(web::to(default_handler))
             .service(index)
     })
-    .bind(config.server_addr.clone())?
+    .bind(("0.0.0.0", port))?
     .run();
 
     println!("Server running at http://{}/", config.server_addr);

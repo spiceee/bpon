@@ -804,7 +804,6 @@ dependencies = [
  "tokio-postgres",
  "tokio-stream",
  "tokio-util",
- "v8",
 ]
 
 [[package]]
@@ -1264,16 +1263,6 @@ name = "fslock"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57eafdd0c16f57161105ae1b98a1238f97645f2f588438b2949c99a2af9616bf"
-dependencies = [
- "libc",
- "winapi",
-]
-
-[[package]]
-name = "fslock"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04412b8935272e3a9bae6f48c7bfff74c2911f60525404edfdd28e49884c3bfb"
 dependencies = [
  "libc",
  "winapi",
@@ -2436,7 +2425,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa03778bb7866d8320fc3dd5e6be52929dc10f729ae5e61ea2fbce385a4595d2"
 dependencies = [
  "bitflags 1.3.2",
- "fslock 0.1.8",
+ "fslock",
  "lazy_static",
  "libc",
  "which 4.4.2",
@@ -3096,18 +3085,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "v8"
-version = "0.83.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "546dcbb978f58aea3ad9286bd1df553f4ab7bbdc2e191cd4ae6c9a98fa95d1cd"
-dependencies = [
- "bitflags 2.4.2",
- "fslock 0.2.1",
- "once_cell",
- "which 5.0.0",
-]
-
-[[package]]
 name = "v_htmlescape"
 version = "0.15.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3246,19 +3223,6 @@ dependencies = [
  "home",
  "once_cell",
  "rustix",
-]
-
-[[package]]
-name = "which"
-version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bf3ea8596f3a0dd5980b46430f2058dfe2c36a27ccfbb1845d6fbfcd9ba6e14"
-dependencies = [
- "either",
- "home",
- "once_cell",
- "rustix",
- "windows-sys 0.48.0",
 ]
 
 [[package]]
