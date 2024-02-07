@@ -48,7 +48,7 @@ form {
     height: 100%;
 
     margin-top: 2rem;
-    padding: 20rem 0;
+    padding: 20rem 0 0 0;
 }
 
 .success {
@@ -165,7 +165,7 @@ nav ul li a {
 }
 
 footer {
-    position: fixed;
+    position: absolute;
     bottom: 2rem;
     left: 2rem;
 }
