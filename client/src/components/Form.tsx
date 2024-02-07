@@ -125,9 +125,7 @@ const Form: React.FC = () => {
 
     useEffect(() => {
         console.log('errors', errors);
-        Object.keys(errors)?.length
-            ? setFormState(formStates.ERROR)
-            : setFormState(formStates.INITIAL);
+        Object.keys(errors)?.length && setFormState(formStates.ERROR);
     }, [errors]);
 
     register('cf_challenge');

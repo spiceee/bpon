@@ -13,7 +13,7 @@ const Success: React.FunctionComponent<Props> = ({
 		<div className="success">
 			<h2>Informação gravada com sucesso!</h2>
 
-			<span onClick={onClick}>Insira outro código</span>
+			<button onClick={onClick}>Insira outro código</button>
 		</div>
 	);
 };

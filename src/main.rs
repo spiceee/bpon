@@ -221,20 +221,22 @@ mod db {
                     &code_info.reimbursed,
                 ],
             )
-            .await?;
+            .await;
 
         println!("{code_info:?}");
         println!("{query:?}");
 
-        query
-            .iter()
-            .map(|row| {
-                println!("{row:?}");
-                TrackingCode::from_row_ref(row).unwrap()
-            })
-            .collect::<Vec<TrackingCode>>()
-            .pop()
-            .ok_or(MyError::NotFound) // more applicable for SELECTs
+        Ok(code_info)
+
+        // query
+        //     .iter()
+        //     .map(|row| {
+        //         println!("{row:?}");
+        //         TrackingCode::from_row_ref(row).unwrap()
+        //     })
+        //     .collect::<Vec<TrackingCode>>()
+        //     .pop()
+        //     .ok_or(MyError::NotFound) // more applicable for SELECTs
     }
 
     pub async fn get_tracking_codes(
@@ -371,7 +373,6 @@ mod handlers {
             Ok(_) => {
                 let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
-                println!("HEY!!!");
                 let new_code = db::add_tracking_code(&client, code_info).await?;
                 Ok(HttpResponse::Ok().json(new_code))
             }
