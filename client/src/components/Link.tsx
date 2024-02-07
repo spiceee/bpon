@@ -7,12 +7,7 @@ interface LinkProps {
 
 export default function Link(props: LinkProps): JSX.Element {
     return (
-        <a
-            className="link"
-            target="_blank"
-            href={props.link || '#'}
-            rel="noreferrer"
-        >
+        <a target="_blank" href={props.link || '#'} rel="noreferrer">
             {props.children}
         </a>
     );
