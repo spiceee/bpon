@@ -1,7 +1,7 @@
 use barrel::{backend::Pg, types, Migration};
 
 pub fn migration() -> String {
-    let mut m = Migration::new().schema("bpon_dev");
+    let mut m = Migration::new().schema("railway");
 
     m.create_table("tracking_codes", |t| {
         t.add_column("created_at", types::custom("TIMESTAMPTZ").default("now()"));

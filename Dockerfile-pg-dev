@@ -3,7 +3,7 @@ FROM postgres:15
 RUN apt-get update && \
   apt-get install -y --no-install-recommends postgresql-contrib
 
-ENV POSTGRES_DB=bpon_dev
+ENV POSTGRES_DB=railway
 ENV POSTGRES_USER=bpon_admin
 ENV POSTGRES_PASSWORD=bpon_pass
 

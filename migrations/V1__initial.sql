@@ -1,7 +1,7 @@
-DROP SCHEMA IF EXISTS bpon_dev CASCADE;
-CREATE SCHEMA bpon_dev;
+DROP SCHEMA IF EXISTS railway CASCADE;
+CREATE SCHEMA railway;
 
-CREATE TABLE bpon_dev.users (
+CREATE TABLE railway.users (
     id  BIGSERIAL PRIMARY KEY,
     email       VARCHAR(200) NOT NULL,
     first_name  VARCHAR(200) NOT NULL,

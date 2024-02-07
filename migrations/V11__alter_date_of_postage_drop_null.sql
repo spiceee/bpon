@@ -1,1 +1,1 @@
-alter table bpon_dev.tracking_codes alter date_of_postage DROP NOT NULL;
+alter table railway.tracking_codes alter date_of_postage DROP NOT NULL;
