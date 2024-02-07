@@ -170,6 +170,16 @@ nav ul li a {
     color: black;
 }
 
+footer {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+}
+
+.copyright {
+    font-size: 0.85rem;
+}
+
 #root:before {
     border-radius: 10px 10px 0 0;
     content: '';

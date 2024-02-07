@@ -26,6 +26,7 @@ actix-web-lab = "0.20"
 actix-ws = "0.2.5"
 actix-rt = "2.2.0"
 actix-service = "2.0.0"
+actix-limitation = "0.5.1"
 
 rusty_v8 = "0.3.6-debug4"
 ssr_rs = "0.2.3"

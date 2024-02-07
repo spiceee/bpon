@@ -101,6 +101,8 @@ const Form: React.FC = () => {
             if (status === 200) {
                 setFormState(formStates.SUCCESS);
                 reset();
+            } else if (status === 400) {
+                turnstile.reset();
             } else {
                 setFormState(formStates.ERROR);
             }

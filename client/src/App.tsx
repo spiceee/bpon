@@ -5,11 +5,11 @@ import { Helmet } from 'react-helmet';
 import './styles/index.scss';
 import favicon from '../public/favicon.png';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 import Home from './pages/Home';
 import About from './pages/About';
 import NotFound from './pages/404';
-import { PUBLIC_CAPTCHA_SITE_KEY } from './utils/constants';
 
 const App: React.FC = () => {
     return (
@@ -25,6 +25,7 @@ const App: React.FC = () => {
                 <Route path="/about" component={About} />
                 <Route path="*" component={NotFound} />
             </Switch>
+            <Footer />
         </>
     );
 };
