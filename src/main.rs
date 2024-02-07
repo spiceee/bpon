@@ -107,7 +107,7 @@ mod models {
         // pub updated_at: DateTime<Utc>,
         // pub user_id: i32,
         pub country_of_origin: String,
-        pub date_of_postage: DateTime<Utc>,
+        pub date_of_postage: Option<DateTime<Utc>>,
         pub value_in_real: Decimal,
         pub reimbursed: bool,
     }
@@ -365,11 +365,6 @@ mod handlers {
                 Ok(HttpResponse::Forbidden().finish())
             }
         }
-
-        // match validated.success {
-        //     Ok(_) => Ok::<HttpResponse, E>(HttpResponse::Ok().json(new_user)),
-        //     Err(_) =>
-        // };
     }
 }
 
@@ -456,6 +451,7 @@ async fn main() -> std::io::Result<()> {
                     .route(web::post().to(add_user))
                     .route(web::get().to(get_users)),
             )
+            //
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             // .service(
             //     web::resource("/").route(web::get().to(|req: HttpRequest| async move {
