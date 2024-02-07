@@ -14,7 +14,7 @@ $small: 1120px;
 }
 
 #root {
-    height: auto;
+    height: 100vh;
     width: 100%;
 }
 
@@ -26,7 +26,14 @@ h1 {
 
 p {
     font-size: 1rem;
-    margin-left: 1rem;
+    margin: 1rem;
+    padding: 0 1rem;
+    color: #333;
+
+    strong {
+        font-weight: 900;
+        text-transform: uppercase;
+    }
 }
 
 input,
@@ -47,10 +54,8 @@ form {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
 
-    margin-top: 2rem;
-    padding: 20rem 0 0 0;
+    padding: 1rem 0 2rem 0;
 }
 
 .success {
@@ -155,8 +160,6 @@ label.consentLabel {
 }
 
 nav {
-    position: fixed;
-    height: 100px;
     width: 100%;
 }
 
@@ -169,26 +172,35 @@ nav ul {
 
 nav ul li {
     margin-right: 25px;
-    font-size: 20px;
+    font-size: 1.3rem;
 }
 
 nav ul li a {
     color: black;
 }
 
+.summary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
 footer {
-    position: absolute;
-    bottom: 2rem;
-    left: 2rem;
+    padding: 2rem 0 1rem 2rem;
 }
 
 footer a {
     color: #32cd32;
-    font-size: 0.85rem;
+    font-size: inherit;
 }
 
 .copyright {
     font-size: 0.85rem;
+
+    span {
+        font-size: 0.85rem;
+    }
 }
 
 .logoWrapper {
@@ -219,24 +231,4 @@ footer a {
     height: 8px;
     position: absolute;
     top: 0px;
-}
-
-#root:after {
-    border-radius: 0px 0px 10px 10px;
-    content: '';
-    background-image: repeating-linear-gradient(
-        -45deg,
-        white 0px,
-        white 15px,
-        #32cd32 15px,
-        #32cd32 30px,
-        white 30px,
-        white 45px,
-        #ffff00 45px,
-        #ffff00 60px
-    );
-    width: 100%;
-    height: 8px;
-    position: absolute;
-    bottom: 0;
 }

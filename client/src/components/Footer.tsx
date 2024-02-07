@@ -14,7 +14,10 @@ const Footer: React.FC = () => {
 				<Link link="mailto:ouvidoria@importacaonaoautorizada.com">
 					ouvidoria at importacaonaoautorizada.com
 				</Link>
-				.
+				.{' '}
+				<span>
+					Este site não é filiado aos Correios ou Receita Federal.
+				</span>
 			</div>
 		</footer>
 	);
