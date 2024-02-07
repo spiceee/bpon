@@ -14,6 +14,7 @@ import {
 } from '../utils/constants';
 
 import Money from './ui/Money';
+import Success from './Success';
 
 const formStates = Object.freeze({
     SUCCESS: 'SUCCESS',
@@ -109,8 +110,8 @@ const Form: React.FC = () => {
             const status = result.status;
 
             if (status === 200) {
-                setFormState(formStates.SUCCESS);
                 reset();
+                setFormState(formStates.SUCCESS);
             } else if (status === 400) {
                 turnstile.reset();
             } else {
@@ -147,195 +148,223 @@ const Form: React.FC = () => {
                 }}
             />
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="requiredFields">
-                    <h1>Contribua com informação sobre sua encomenda:</h1>
+            {formState === formStates.SUCCESS ? (
+                <Success
+                    onClick={() => {
+                        setFormState(formStates.INITIAL);
+                    }}
+                />
+            ) : (
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className="requiredFields">
+                        <h1>Contribua com informação sobre sua encomenda:</h1>
 
-                    <div className="inputWrapper">
-                        <label htmlFor="code">Código de rastreio*</label>
-                        <input
-                            {...register('code', {
-                                required: 'Digite um código válido.',
-                                pattern: /[0-9A-Za-z]+/,
-                            })}
-                            id="code"
-                            type="text"
-                            placeholder="NC123445965BR"
-                            maxLength={13}
-                            onBlur={e => findCode(e.target.value)}
-                        />
-                        <div className="notes">O código tem 13 caracteres.</div>
-                        {errors?.code && (
-                            <div className="error">{errors.code.message}</div>
-                        )}
-                        {codeExists && (
-                            <div className="error">
-                                Esse código já foi inserido. Cada código pode
-                                ser inserido apenas uma vez!
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="inputWrapper">
-                        <label htmlFor="reason">Razão da devolução*</label>
-                        <select
-                            {...register('reason', {
-                                required: false,
-                            })}
-                            id="reason"
-                        >
-                            {REASONS.map(reason => (
-                                <option value={reason.code} key={reason.code}>
-                                    {reason.reasonPtBr}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="notes">
-                            Selecione OUTRAS casa tenha dúvida
-                        </div>
-                        <div className="error"></div>
-                    </div>
-                </div>
-
-                <div className="optionalFields">
-                    <div className="inputWrapper">
-                        <label htmlFor="value_in_real">
-                            Valor estimado total em Reais R$
-                        </label>
-                        <Money
-                            register={register}
-                            setValue={setValue}
-                            fieldName="value_in_real"
-                        />
-                        <div className="notes">
-                            Usaremos essa informação para calcular o prejuízo
-                            total
-                        </div>
-                        <div className="error"></div>
-                    </div>
-
-                    <div className="inputWrapper">
-                        <label htmlFor="country_of_origin">
-                            País de origem
-                        </label>
-                        <select
-                            {...register('country_of_origin', {
-                                required: false,
-                            })}
-                            defaultValue={DEFAULT}
-                            id="country_of_origin"
-                        >
-                            {COUNTRIES.map(country => (
-                                <option value={country.code} key={country.code}>
-                                    {country.namePtBr}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="notes">
-                            Usaremos essa informação para calcular a quantidade
-                            de poluição que a devolução causou ao planeta
-                        </div>
-                        <div className="error"></div>
-                    </div>
-
-                    <div className="date_of_postage_wrapper">
                         <div className="inputWrapper">
-                            <label htmlFor="dopDay">
-                                Data aproximada da postagem
+                            <label htmlFor="code">Código de rastreio*</label>
+                            <input
+                                {...register('code', {
+                                    required: 'Digite um código válido.',
+                                    pattern: /[0-9A-Za-z]+/,
+                                })}
+                                id="code"
+                                type="text"
+                                placeholder="NC123445965BR"
+                                maxLength={13}
+                                onBlur={e => findCode(e.target.value)}
+                            />
+                            <div className="notes">
+                                O código tem 13 caracteres.
+                            </div>
+                            {errors?.code && (
+                                <div className="error">
+                                    {errors.code.message}
+                                </div>
+                            )}
+                            {codeExists && (
+                                <div className="error">
+                                    Esse código já foi inserido. Cada código
+                                    pode ser inserido apenas uma vez!
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="inputWrapper">
+                            <label htmlFor="reason">Razão da devolução*</label>
+                            <select
+                                {...register('reason', {
+                                    required: false,
+                                })}
+                                id="reason"
+                            >
+                                {REASONS.map(reason => (
+                                    <option
+                                        value={reason.code}
+                                        key={reason.code}
+                                    >
+                                        {reason.reasonPtBr}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="notes">
+                                Selecione OUTRAS casa tenha dúvida
+                            </div>
+                            <div className="error"></div>
+                        </div>
+                    </div>
+
+                    <div className="optionalFields">
+                        <div className="inputWrapper">
+                            <label htmlFor="value_in_real">
+                                Valor estimado total em Reais R$
                             </label>
-                            <div>
-                                <select
-                                    {...register('dopDay')}
-                                    defaultValue={DEFAULT}
-                                    id="dopDay"
-                                >
-                                    <option value={DEFAULT} disabled hidden>
-                                        DD
+                            <Money
+                                register={register}
+                                setValue={setValue}
+                                fieldName="value_in_real"
+                            />
+                            <div className="notes">
+                                Usaremos essa informação para calcular o
+                                prejuízo total
+                            </div>
+                            <div className="error"></div>
+                        </div>
+
+                        <div className="inputWrapper">
+                            <label htmlFor="country_of_origin">
+                                País de origem
+                            </label>
+                            <select
+                                {...register('country_of_origin', {
+                                    required: false,
+                                })}
+                                defaultValue={DEFAULT}
+                                id="country_of_origin"
+                            >
+                                {COUNTRIES.map(country => (
+                                    <option
+                                        value={country.code}
+                                        key={country.code}
+                                    >
+                                        {country.namePtBr}
                                     </option>
-                                    {DAYS.map((day, idx) => (
-                                        <option value={day} key={`day${idx}`}>
-                                            {day}
+                                ))}
+                            </select>
+                            <div className="notes">
+                                Usaremos essa informação para calcular a
+                                quantidade de poluição que a devolução causou ao
+                                planeta
+                            </div>
+                            <div className="error"></div>
+                        </div>
+
+                        <div className="date_of_postage_wrapper">
+                            <div className="inputWrapper">
+                                <label htmlFor="dopDay">
+                                    Data aproximada da postagem
+                                </label>
+                                <div>
+                                    <select
+                                        {...register('dopDay')}
+                                        defaultValue={DEFAULT}
+                                        id="dopDay"
+                                    >
+                                        <option value={DEFAULT} disabled hidden>
+                                            DD
                                         </option>
-                                    ))}
-                                </select>
-                                {' / '}
-                                <select
-                                    {...register('dopMon')}
-                                    defaultValue={DEFAULT}
-                                >
-                                    <option value={DEFAULT} disabled hidden>
-                                        MM
-                                    </option>
-                                    {MONTHS.map((mon, idx) => (
-                                        <option value={mon} key={`mon${idx}`}>
-                                            {mon}
+                                        {DAYS.map((day, idx) => (
+                                            <option
+                                                value={day}
+                                                key={`day${idx}`}
+                                            >
+                                                {day}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {' / '}
+                                    <select
+                                        {...register('dopMon')}
+                                        defaultValue={DEFAULT}
+                                    >
+                                        <option value={DEFAULT} disabled hidden>
+                                            MM
                                         </option>
-                                    ))}
-                                </select>
-                                {' / '}
-                                <select
-                                    {...register('dopYear')}
-                                    defaultValue={DEFAULT}
-                                >
-                                    <option value={DEFAULT} disabled hidden>
-                                        AAAA
-                                    </option>
-                                    {YEARS.map((year, idx) => (
-                                        <option value={year} key={`year${idx}`}>
-                                            {year}
+                                        {MONTHS.map((mon, idx) => (
+                                            <option
+                                                value={mon}
+                                                key={`mon${idx}`}
+                                            >
+                                                {mon}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {' / '}
+                                    <select
+                                        {...register('dopYear')}
+                                        defaultValue={DEFAULT}
+                                    >
+                                        <option value={DEFAULT} disabled hidden>
+                                            AAAA
                                         </option>
-                                    ))}
-                                </select>
+                                        {YEARS.map((year, idx) => (
+                                            <option
+                                                value={year}
+                                                key={`year${idx}`}
+                                            >
+                                                {year}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="inputWrapper">
-                        <label htmlFor="reimbursed">
-                            Conseguiu reembolso do valor total?
-                        </label>
-                        <input
-                            id="reimbursed"
-                            {...register('reimbursed', {
-                                required: false,
-                            })}
-                            type="checkbox"
-                            value="true"
-                        />
-                        <div className="error"></div>
-                        <div className="notes">
-                            Clique caso tenha conseguido reaver seu dinheiro
+                        <div className="inputWrapper">
+                            <label htmlFor="reimbursed">
+                                Conseguiu reembolso do valor total?
+                            </label>
+                            <input
+                                id="reimbursed"
+                                {...register('reimbursed', {
+                                    required: false,
+                                })}
+                                type="checkbox"
+                                value="true"
+                            />
+                            <div className="error"></div>
+                            <div className="notes">
+                                Clique caso tenha conseguido reaver seu dinheiro
+                            </div>
+                        </div>
+
+                        <div className="inputWrapper">
+                            <input
+                                id="data_use_consent"
+                                {...register('data_use_consent', {
+                                    required:
+                                        'Você precisa estar de acordos com nossos termos',
+                                })}
+                                type="checkbox"
+                                value="true"
+                            />
+                            <label
+                                htmlFor="data_use_consent"
+                                className="consentLabel"
+                            >
+                                Estou de acordo em ceder as informações acima de
+                                forma anônima para fins de pesquisa e tabulação.
+                            </label>
+                            {errors?.data_use_consent && (
+                                <div className="error">
+                                    {errors.data_use_consent.message}
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    <div className="inputWrapper">
-                        <input
-                            id="data_use_consent"
-                            {...register('data_use_consent', {
-                                required:
-                                    'Você precisa estar de acordos com nossos termos',
-                            })}
-                            type="checkbox"
-                            value="true"
-                        />
-                        <label
-                            htmlFor="data_use_consent"
-                            className="consentLabel"
-                        >
-                            Estou de acordo em ceder as informações acima de
-                            forma anônima para fins de pesquisa e tabulação.
-                        </label>
-                        {errors?.data_use_consent && (
-                            <div className="error">
-                                {errors.data_use_consent.message}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <button id="submit-btn" className="button">
-                    Envie
-                </button>
-            </form>
+                    <button id="submit-btn" className="button">
+                        Envie
+                    </button>
+                </form>
+            )}
         </>
     );
 };
