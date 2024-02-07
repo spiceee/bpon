@@ -207,7 +207,7 @@ const Form: React.FC = () => {
 
                 <p>
                     Esse site não tem qualquer ligação com os Correios ou
-                    Receita Federal, portando não poderá ajudar a resolver
+                    Receita Federal, portanto não poderá ajudar a resolver
                     problemas com as encomendas pontualmente. Para tal, você
                     deve procurar o atendimendo ao consumidor dos Correios.
                 </p>
