@@ -16,6 +16,10 @@ const App: React.FC = () => {
         <>
             <Helmet>
                 <meta charSet="utf-8" />
+                <meta
+                    name="description"
+                    content="O que está acontecendo com as encomendas que tentam entrar no Brasil? Por que nossas importações estão sendo não autorizadas? Queremos descobrir com a sua ajuda!"
+                />
                 <title>Importação Não Autorizada</title>
                 <link rel="icon" type="image/png" href={favicon} />
             </Helmet>
