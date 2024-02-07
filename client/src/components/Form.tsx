@@ -48,6 +48,7 @@ const Form: React.FC = () => {
             dopYear: DEFAULT,
             value_in_real: null,
             reimbursed: null,
+            data_use_consent: false,
         },
     });
 
@@ -258,6 +259,21 @@ const Form: React.FC = () => {
                         <div className="notes">
                             Clique caso tenha conseguido reaver seu dinheiro
                         </div>
+                    </div>
+
+                    <div className="inputWrapper">
+                        <input
+                            id="data_use_consent"
+                            {...register('data_use_consent', {
+                                required: true,
+                            })}
+                            type="checkbox"
+                            value="true"
+                        />
+                        <label htmlFor="data_use_consent">
+                            Estou de acordo em ceder as informações acima de
+                            forma anônima para fins de pesquisa e tabulação.
+                        </label>
                     </div>
                 </div>
 

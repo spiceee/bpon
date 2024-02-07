@@ -46,7 +46,7 @@ p {
 input,
 select {
     padding: 0.3rem;
-    border-radius: 0.05rem;
+    border-radius: 0.5rem;
 }
 
 button {
@@ -65,6 +65,12 @@ form {
 }
 
 label {
+    font-size: 0.7rem;
+    padding: 0 0 0 1rem;
+}
+
+label:not(:last-child) {
+    font-size: 1rem;
     padding: 0 1rem 0 0;
 }
 
