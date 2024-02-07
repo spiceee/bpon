@@ -80,6 +80,10 @@ const Form: React.FC = () => {
         return body;
     }, []);
 
+    useEffect(() => {
+        console.log('errors', errors);
+    }, [errors]);
+
     register('cf_challenge');
     watch('value_in_real');
     watch('data_use_consent');
@@ -118,7 +122,7 @@ const Form: React.FC = () => {
                         <label htmlFor="code">Código de rastreio*</label>
                         <input
                             {...register('code', {
-                                required: true,
+                                required: 'Digite um código válido.',
                                 pattern: /[0-9A-Za-z]+/,
                             })}
                             id="code"
@@ -127,7 +131,9 @@ const Form: React.FC = () => {
                             maxLength={13}
                         />
                         <div className="notes">O código tem 13 caracteres.</div>
-                        <div className="error"></div>
+                        {errors?.code && (
+                            <div className="error">{errors.code.message}</div>
+                        )}
                     </div>
 
                     <div className="inputWrapper">
@@ -265,19 +271,28 @@ const Form: React.FC = () => {
                         <input
                             id="data_use_consent"
                             {...register('data_use_consent', {
-                                required: true,
+                                required:
+                                    'Você precisa estar de acordos com nossos termos',
                             })}
                             type="checkbox"
                             value="true"
                         />
-                        <label htmlFor="data_use_consent">
+                        <label
+                            htmlFor="data_use_consent"
+                            className="consentLabel"
+                        >
                             Estou de acordo em ceder as informações acima de
                             forma anônima para fins de pesquisa e tabulação.
                         </label>
+                        {errors?.data_use_consent && (
+                            <div className="error">
+                                {errors.data_use_consent.message}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <button id="submit-btn" className="button" disabled>
+                <button id="submit-btn" className="button">
                     Envie
                 </button>
             </form>

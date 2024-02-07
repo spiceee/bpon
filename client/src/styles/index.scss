@@ -65,13 +65,13 @@ form {
 }
 
 label {
-    font-size: 0.9rem;
-    padding: 0 0 0 1rem;
-}
-
-label:not(:last-child) {
     font-size: 1rem;
     padding: 0 1rem 0 0;
+}
+
+label.consentLabel {
+    font-size: 0.9rem;
+    padding: 0 0 0 1rem;
 }
 
 .requiredFields,
@@ -103,6 +103,11 @@ label:not(:last-child) {
     color: gray;
 
     padding-top: 0.5rem;
+}
+
+.error {
+    color: red;
+    font-size: 0.7rem;
 }
 
 .App-logo {
