@@ -1,1 +1,1 @@
-select $table_fields from railway.tracking_codes where code = '$code' limit 1;
+select $table_fields from tracking_codes where code = '$code' limit 1;

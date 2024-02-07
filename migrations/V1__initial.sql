@@ -1,7 +1,4 @@
-DROP SCHEMA IF EXISTS railway CASCADE;
-CREATE SCHEMA railway;
-
-CREATE TABLE railway.users (
+CREATE TABLE users (
     id  BIGSERIAL PRIMARY KEY,
     email       VARCHAR(200) NOT NULL,
     first_name  VARCHAR(200) NOT NULL,

@@ -1,1 +1,1 @@
-SELECT $table_fields FROM bpon_dev.users;
+SELECT $table_fields FROM users;

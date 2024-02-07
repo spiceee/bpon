@@ -1,7 +1,7 @@
 use barrel::{backend::Pg, types, Migration};
 
 pub fn migration() -> String {
-    let mut m = Migration::new().schema("railway");
+    let mut m = Migration::new().schema("public");
 
     m.change_table("users", |t| {
         t.add_column("encrypted_password", types::varchar(255).nullable(true));
