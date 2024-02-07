@@ -274,6 +274,27 @@ mod db {
 
         Ok(results)
     }
+
+    pub async fn get_tracking_code(
+        client: &Client,
+        code: String,
+    ) -> Result<Vec<TrackingCode>, MyError> {
+        let _code_sql = include_str!("../sql/find_code.sql");
+
+        let _code_sql = _code_sql
+            .replace("$table_fields", &TrackingCode::sql_table_fields())
+            .replace("$code", &code.to_string());
+        let code_sql = client.prepare(&_code_sql).await.unwrap();
+
+        let results = client
+            .query(&code_sql, &[])
+            .await?
+            .iter()
+            .map(|row| TrackingCode::from_row_ref(row).unwrap())
+            .collect::<Vec<TrackingCode>>();
+
+        Ok(results)
+    }
 }
 
 mod handlers {
@@ -295,6 +316,18 @@ mod handlers {
         let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
         let tracking_codes = db::get_tracking_codes(&client, user_id).await?;
+
+        Ok(HttpResponse::Ok().json(tracking_codes))
+    }
+
+    pub async fn get_tracking_code(
+        db_pool: web::Data<Pool>,
+        path: web::Path<String>,
+    ) -> Result<HttpResponse, Error> {
+        let code = path.into_inner();
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+        let tracking_codes = db::get_tracking_code(&client, code).await?;
 
         Ok(HttpResponse::Ok().json(tracking_codes))
     }
@@ -396,7 +429,7 @@ async fn response_body(path: web::Path<String>) -> HttpResponse {
 use crate::config::ExampleConfig;
 use ::config::Config;
 use dotenvy::dotenv;
-use handlers::{add_tracking_code, add_user, get_tracking_codes, get_users};
+use handlers::{add_tracking_code, add_user, get_tracking_code, get_tracking_codes, get_users};
 use std::env;
 use std::fs::read_to_string;
 use std::sync::Mutex;
@@ -466,6 +499,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
             )
+            .service(web::resource("/codes/{code}").route(web::get().to(get_tracking_code)))
             .default_service(web::to(default_handler))
             .service(index)
     })

@@ -25,6 +25,7 @@ const formStates = Object.freeze({
 
 const Form: React.FC = () => {
     const [formState, setFormState] = useState<string>(formStates.INITIAL);
+    const [codeExists, setCodeExists] = useState<boolean | null>(null);
 
     const turnstile = useTurnstile();
     const buttonRef = useRef();
@@ -52,6 +53,15 @@ const Form: React.FC = () => {
             data_use_consent: false,
         },
     });
+
+    const findCode = useCallback(async code => {
+        return fetch(`./codes/${code}`)
+            .then(response => response.json())
+            .then(codes => {
+                console.log(codes);
+                codes?.length ? setCodeExists(true) : setCodeExists(false);
+            });
+    }, []);
 
     const submitPayload = useCallback(
         async formData => {
@@ -109,7 +119,7 @@ const Form: React.FC = () => {
 
             return body;
         },
-        [reset]
+        [reset, turnstile]
     );
 
     useEffect(() => {
@@ -152,10 +162,17 @@ const Form: React.FC = () => {
                             type="text"
                             placeholder="NC123445965BR"
                             maxLength={13}
+                            onBlur={e => findCode(e.target.value)}
                         />
                         <div className="notes">O código tem 13 caracteres.</div>
                         {errors?.code && (
                             <div className="error">{errors.code.message}</div>
+                        )}
+                        {codeExists && (
+                            <div className="error">
+                                Esse código já foi inserido. Cada código pode
+                                ser inserido apenas uma vez!
+                            </div>
                         )}
                     </div>
 
