@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-session = "0.9"
+actix-session = { version = "0.9", features = ["cookie-session"] }
 actix = "0.13"
 actix-broker = "0.4"
 actix-codec = "0.5"
@@ -20,7 +20,7 @@ actix-protobuf = "0.10"
 actix-test = "0.1"
 actix-tls = "3.2"
 actix-utils = "3"
-actix-web = "4.4"
+actix-web = { version = "4.4", features = ["cookies"] }
 actix-web-actors = "4.1"
 actix-web-lab = "0.20"
 actix-ws = "0.2.5"

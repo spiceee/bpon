@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 use actix_files::{Files, NamedFile};
-use actix_session::{storage::SessionStore, Session, SessionMiddleware};
+use actix_session::SessionExt;
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
     dev::ServiceRequest,
     error, get,
@@ -19,33 +20,8 @@ use tokio_postgres::types::FromSql;
 use async_stream::stream;
 use std::ops::DerefMut;
 
-/// simple index handler
-#[get("/welcome")]
-async fn welcome(req: HttpRequest, session: Session) -> Result<HttpResponse> {
-    println!("{req:?}");
-
-    // session
-    let mut counter = 1;
-    if let Some(count) = session.get::<i32>("counter")? {
-        println!("SESSION value: {count}");
-        counter = count + 1;
-    }
-
-    // set counter to session
-    session.insert("counter", counter)?;
-
-    // response
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type(ContentType::plaintext())
-        .body(include_str!("../static/welcome.html")))
-}
-
 #[get("/")]
-async fn index(
-    req: HttpRequest,
-    data: web::Data<AppState>,
-    session: Session,
-) -> Result<HttpResponse> {
+async fn index(req: HttpRequest, data: web::Data<AppState>) -> Result<HttpResponse> {
     let props = format!(
         r##"{{
             "location": "{}",
@@ -53,15 +29,6 @@ async fn index(
         }}"##,
         req.uri()
     );
-
-    let mut counter = 1;
-    if let Some(count) = session.get::<i32>("counter")? {
-        println!("SESSION value: {count}");
-        counter = count + 1;
-    }
-
-    // set counter to session
-    session.insert("counter", counter)?;
 
     let source = data.js_source.lock().unwrap();
     let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
@@ -429,19 +396,33 @@ async fn response_body(path: web::Path<String>) -> HttpResponse {
 
 use crate::config::ExampleConfig;
 use ::config::Config;
+use actix_limitation::{Limiter, RateLimiter};
+use actix_session::config::{BrowserSession, CookieContentSecurity};
+use actix_web::cookie::{Key, SameSite};
 use dotenvy::dotenv;
-use handlers::{add_tracking_code, add_user, get_tracking_code, get_tracking_codes, get_users};
 use std::env;
 use std::fs::read_to_string;
 use std::sync::Mutex;
+use std::{sync::Arc, time::Duration};
 use tokio_postgres::NoTls;
 
-use actix_limitation::{Limiter, RateLimiter};
-use actix_session::SessionExt as _;
-use std::{sync::Arc, time::Duration};
+use handlers::{add_tracking_code, add_user, get_tracking_code, get_tracking_codes, get_users};
 
 struct AppState {
     js_source: Mutex<String>, // <- Mutex is necessary to mutate safely across threads
+}
+
+fn session_middleware() -> SessionMiddleware<CookieSessionStore> {
+    let secret_key = env::var("PRIVATE_SESSION_SECRET").expect("Missing secret");
+
+    SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
+        .cookie_name(String::from(secret_key)) // arbitrary name
+        .cookie_secure(true) // https only
+        .session_lifecycle(BrowserSession::default()) // expire at end of session
+        .cookie_same_site(SameSite::Strict)
+        .cookie_content_security(CookieContentSecurity::Private) // encrypt
+        .cookie_http_only(true) // disallow scripts from reading
+        .build()
 }
 
 #[actix_web::main]
@@ -489,6 +470,7 @@ async fn main() -> std::io::Result<()> {
 
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(session_middleware())
             .wrap(RateLimiter::default())
             .app_data(limiter.clone())
             .app_data(web::Data::new(pool.clone()))
