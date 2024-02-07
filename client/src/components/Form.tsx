@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import Turnstile, { useTurnstile } from 'react-turnstile';
@@ -30,7 +30,6 @@ const Form: React.FC = () => {
     const [retryCount, setRetryCount] = useState(0);
 
     const turnstile = useTurnstile();
-    const buttonRef = useRef();
 
     const {
         handleSubmit,

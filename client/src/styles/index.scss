@@ -39,6 +39,7 @@ button {
     padding: 1rem 2rem;
     margin-top: 2rem;
     border-radius: 0.5rem;
+    cursor: pointer;
 }
 
 form {
@@ -103,6 +104,16 @@ label.consentLabel {
 .error {
     color: red;
     font-size: 0.8rem;
+
+    animation-duration: 0.3s;
+    animation-fill-mode: forwards;
+    animation-name: fadeUp;
+    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0;
+
+    transform: translateY(1.5rem);
+
+    will-change: opacity, transform;
 }
 
 .App-logo {
