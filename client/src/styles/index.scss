@@ -19,26 +19,14 @@ $small: 1120px;
 }
 
 h1 {
-    font-size: 1rem;
+    font-size: 2rem;
     font-weight: 900;
     line-height: 150%;
-
-    @media screen and (max-width: $medium) {
-        font-size: 2rem;
-    }
-
-    @media screen and (max-width: $small) {
-        font-size: 1.5rem;
-    }
 }
 
 p {
     font-size: 1rem;
     margin-left: 1rem;
-
-    @media screen and (max-width: $small) {
-        font-size: 20px;
-    }
 }
 
 input,
@@ -60,7 +48,7 @@ form {
     height: 100%;
 
     margin-top: 2rem;
-    padding: 1rem 0;
+    padding: 20rem 0;
 }
 
 .success {
@@ -84,14 +72,12 @@ label.consentLabel {
     padding: 0 0 0 1rem;
 }
 
-.requiredFields,
-.optionalFields {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    margin-top: 20px;
-    min-width: 50%;
+.fields {
+    margin-top: 1.2rem;
+
+    @media screen and (max-width: $small) {
+        margin: 0 2rem;
+    }
 }
 
 .wrapper {
@@ -115,7 +101,7 @@ label.consentLabel {
 
 .error {
     color: red;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
 }
 
 .App-logo {
@@ -179,13 +165,14 @@ nav ul li a {
 }
 
 footer {
-    position: absolute;
+    position: fixed;
     bottom: 2rem;
     left: 2rem;
 }
 
 footer a {
     color: #32cd32;
+    font-size: 0.85rem;
 }
 
 .copyright {

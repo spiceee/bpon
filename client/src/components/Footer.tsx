@@ -10,7 +10,11 @@ const Footer: React.FC = () => {
 			<div className="copyright">
 				© 2024 Importação Não Autorizada. Made with{' '}
 				<Link link="https://www.rust-lang.org/">Rust</Link> and{' '}
-				<Link link="https://react.dev/">React</Link>.
+				<Link link="https://react.dev/">React</Link>. Contato:{' '}
+				<Link link="mailto:ouvidoria@importacaonaoautorizada.com">
+					ouvidoria at importacaonaoautorizada.com
+				</Link>
+				.
 			</div>
 		</footer>
 	);

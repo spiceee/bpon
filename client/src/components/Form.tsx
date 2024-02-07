@@ -27,6 +27,7 @@ const formStates = Object.freeze({
 const Form: React.FC = () => {
     const [formState, setFormState] = useState<string>(formStates.INITIAL);
     const [codeExists, setCodeExists] = useState<boolean | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
 
     const turnstile = useTurnstile();
     const buttonRef = useRef();
@@ -83,39 +84,46 @@ const Form: React.FC = () => {
             }
 
             setFormState(formStates.REQUESTING);
+            let body;
 
-            const result = await fetch('./codes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cf_challenge: formData.cf_challenge,
-                    tracking_code: {
-                        code: formData.code,
-                        reason: formData.reason,
-                        country_of_origin: formData.country_of_origin,
-                        date_of_postage: dateOfPostage ?? null,
-                        value_in_real:
-                            amount &&
-                            parseFloat(
-                                formData.value_in_real.replace(/^R\$(\s?)/, '')
-                            ).toFixed(2),
-                        reimbursed: formData.reimbursed ? true : false,
+            try {
+                const result = await fetch('./codes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
                     },
-                }),
-            });
+                    body: JSON.stringify({
+                        cf_challenge: formData.cf_challenge,
+                        tracking_code: {
+                            code: formData.code,
+                            reason: formData.reason,
+                            country_of_origin: formData.country_of_origin,
+                            date_of_postage: dateOfPostage ?? null,
+                            value_in_real:
+                                amount &&
+                                parseFloat(
+                                    formData.value_in_real.replace(
+                                        /^R\$(\s?)/,
+                                        ''
+                                    )
+                                ).toFixed(2),
+                            reimbursed: formData.reimbursed ? true : false,
+                        },
+                    }),
+                });
 
-            const body = await result.json();
-            const status = result.status;
+                body = await result.json();
 
-            if (status === 200) {
-                reset();
-                setFormState(formStates.SUCCESS);
-            } else if (status === 403) {
+                if (result.status === 200) {
+                    setFormState(formStates.SUCCESS);
+                    reset();
+                }
+            } catch {
+                console.warn('Token is stale, refresh');
                 turnstile.reset();
-            } else {
                 setFormState(formStates.ERROR);
+
+                return false;
             }
 
             return body;
@@ -132,8 +140,13 @@ const Form: React.FC = () => {
     watch('value_in_real');
     watch('data_use_consent');
 
-    const onSubmit = async (formData: any) => {
-        await submitPayload({ ...getValues() });
+    const onSubmit = async () => {
+        const result = await submitPayload({ ...getValues() });
+
+        if (!result && retryCount < 3) {
+            await submitPayload({ ...getValues() });
+            setRetryCount(c => c + 1);
+        }
     };
 
     return (
@@ -150,11 +163,12 @@ const Form: React.FC = () => {
                 <Success
                     onClick={() => {
                         setFormState(formStates.INITIAL);
+                        turnstile.reset();
                     }}
                 />
             ) : (
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="requiredFields">
+                    <div className="fields">
                         <h1>Contribua com informação sobre sua encomenda:</h1>
 
                         <div className="inputWrapper">
@@ -162,13 +176,16 @@ const Form: React.FC = () => {
                             <input
                                 {...register('code', {
                                     required: 'Digite um código válido.',
-                                    pattern: /[0-9A-Za-z]+/,
+                                    pattern: /([0-9A-Za-z]){13}/,
                                 })}
                                 id="code"
                                 type="text"
                                 placeholder="NC123445965BR"
                                 maxLength={13}
-                                onBlur={e => findCode(e.target.value)}
+                                onBlur={e =>
+                                    e.target.value.length === 13 &&
+                                    findCode(e.target.value)
+                                }
                             />
                             <div className="notes">
                                 O código tem 13 caracteres.
@@ -208,9 +225,7 @@ const Form: React.FC = () => {
                             </div>
                             <div className="error"></div>
                         </div>
-                    </div>
 
-                    <div className="optionalFields">
                         <div className="inputWrapper">
                             <label htmlFor="value_in_real">
                                 Valor estimado total em Reais R$
