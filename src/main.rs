@@ -1,26 +1,14 @@
 #![allow(unused_imports)]
 use actix_files::{Files, NamedFile};
-use actix_limitation::{Limiter, RateLimiter};
-use actix_session::config::{BrowserSession, CookieContentSecurity};
-use actix_session::SessionExt;
-use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
-use actix_web::cookie::{Key, SameSite};
+use actix_session::Session;
 use actix_web::{
-    dev::ServiceRequest,
-    error, get,
-    http::{
-        header::{self, ContentType},
-        Method, StatusCode,
-    },
-    middleware, web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
+    get,
+    http::{Method, StatusCode},
+    web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-use barrel::types::Type;
+
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
-use std::{convert::Infallible, io};
-use tokio_postgres::types::FromSql;
-
-use async_stream::stream;
 use std::ops::DerefMut;
 
 #[actix_web::get("get_session")]
@@ -75,7 +63,6 @@ mod config {
 
 mod models {
     use chrono::{DateTime, Utc};
-    use postgres::Row;
     use rust_decimal::Decimal;
     use serde::{Deserialize, Serialize};
     use tokio_pg_mapper_derive::PostgresMapper;
@@ -283,7 +270,7 @@ mod handlers {
     use crate::{
         db,
         errors::MyError,
-        models::{CodePayload, TrackingCode, User, UserProfile},
+        models::{CodePayload, TrackingCode, User},
     };
     use actix_web::{web, Error, HttpRequest, HttpResponse};
     use cf_turnstile::{SiteVerifyRequest, TurnstileClient};
@@ -401,25 +388,33 @@ use dotenvy::dotenv;
 use std::env;
 use std::fs::read_to_string;
 use std::sync::Mutex;
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 use tokio_postgres::NoTls;
+
+use actix_extensible_rate_limit::{
+    backend::{redis::RedisBackend, SimpleInputFunctionBuilder},
+    RateLimiter,
+};
+
+use redis::aio::ConnectionManager;
+use redis::AsyncCommands;
 
 use handlers::{add_tracking_code, add_user, get_tracking_code, get_tracking_codes, get_users};
 
 struct AppState {
-    js_source: Mutex<String>, // <- Mutex is necessary to mutate safely across threads
+    js_source: Mutex<String>,
 }
 
-fn session_middleware() -> SessionMiddleware<CookieSessionStore> {
-    SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
-        .cookie_name(String::from("session-id")) // arbitrary name
-        .cookie_secure(true) // https only
-        .session_lifecycle(BrowserSession::default()) // expire at end of session
-        .cookie_same_site(SameSite::Strict)
-        .cookie_content_security(CookieContentSecurity::Private) // encrypt
-        .cookie_http_only(true) // disallow scripts from reading
-        .build()
-}
+// fn session_middleware() -> SessionMiddleware<CookieSessionStore> {
+//     SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
+//         .cookie_name(String::from("session-id")) // arbitrary name
+//         .cookie_secure(true) // https only
+//         .session_lifecycle(BrowserSession::default()) // expire at end of session
+//         .cookie_same_site(SameSite::Strict)
+//         .cookie_content_security(CookieContentSecurity::Private) // encrypt
+//         .cookie_http_only(true) // disallow scripts from reading
+//         .build()
+// }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -451,24 +446,33 @@ async fn main() -> std::io::Result<()> {
 
     println!("migration_report {:#?}", migration_report);
 
-    let limiter = web::Data::new(
-        Limiter::builder(redis_url)
-            .key_by(|req: &ServiceRequest| {
-                req.get_session()
-                    .get(&"session-id")
-                    .unwrap_or_else(|_| req.cookie(&"rate-api-id").map(|c| c.to_string()))
-            })
-            .limit(1000)
-            .period(Duration::from_secs(1200)) // 20 minutes
-            .build()
-            .unwrap(),
-    );
+    // let limiter = web::Data::new(
+    //     Limiter::builder(redis_url)
+    //         .key_by(|req: &ServiceRequest| {
+    //             req.get_session()
+    //                 .get(&"session-id")
+    //                 .unwrap_or_else(|_| req.cookie(&"rate-api-id").map(|c| c.to_string()))
+    //         })
+    //         .limit(1000)
+    //         .period(Duration::from_secs(1200)) // 20 minutes
+    //         .build()
+    //         .unwrap(),
+    // );
+
+    let client = redis::Client::open(redis_url).unwrap();
+    let manager = ConnectionManager::new(client).await.unwrap();
+    let backend = RedisBackend::builder(manager).build();
 
     let server = HttpServer::new(move || {
+        let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 5)
+            .real_ip_key()
+            .build();
+        let middleware = RateLimiter::builder(backend.clone(), input)
+            .add_headers()
+            .build();
+
         App::new()
-            .wrap(session_middleware())
-            .wrap(RateLimiter::default())
-            .app_data(limiter.clone())
+            .wrap(middleware)
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(AppState {
                 js_source: Mutex::new(
