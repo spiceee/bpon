@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet';
 
 import './styles/index.scss';
 import favicon from '../public/favicon.png';
+import og from '../public/og.png';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -20,6 +22,20 @@ const App: React.FC = () => {
                     name="description"
                     content="O que está acontecendo com as encomendas que tentam entrar no Brasil? Por que nossas importações estão sendo não autorizadas? Queremos descobrir com a sua ajuda!"
                 />
+                <meta property="og:image" content={og} />
+                <meta property="og:image:width" content="703" />
+                <meta property="og:image:height" content="369" />
+                <meta property="og:title" content="Importação Não Autorizada" />
+                <meta
+                    property="og:url"
+                    content="https://importacaonaoautorizada.com"
+                />
+                <meta
+                    property="og:site_name"
+                    content="Importação Não Autorizada"
+                />
+                <meta property="og:description" content="description of site" />
+                <meta property="og:type" content="Website" />
                 <title>Importação Não Autorizada</title>
                 <link rel="icon" type="image/png" href={favicon} />
             </Helmet>
