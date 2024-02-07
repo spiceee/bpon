@@ -24,7 +24,7 @@ const formStates = Object.freeze({
 });
 
 const Form: React.FC = () => {
-    const [formState, setFormState] = useState(formStates.INITIAL);
+    const [formState, setFormState] = useState<string>(formStates.INITIAL);
 
     const turnstile = useTurnstile();
     const buttonRef = useRef();
@@ -53,35 +53,68 @@ const Form: React.FC = () => {
         },
     });
 
-    const submitPayload = useCallback(async formData => {
-        const result = await fetch('./codes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                cf_challenge: formData.cf_challenge,
-                tracking_code: {
-                    code: formData.code,
-                    reason: formData.reason,
-                    country_of_origin: formData.country_of_origin,
-                    date_of_postage: formData.date_of_postage ?? null,
-                    value_in_real:
-                        formData?.value_in_real &&
-                        parseFloat(
-                            formData.value_in_real.replace(/^R\$(\s?)/, '')
-                        ).toFixed(2),
-                    reimbursed: formData.reimbursed ? true : false,
-                },
-            }),
-        });
+    const submitPayload = useCallback(
+        async formData => {
+            let dateOfPostage;
+            const amount =
+                formData?.value_in_real
+                    ?.replace(/\./g, '')
+                    ?.replace(/,/g, '.') || '';
 
-        const body = await result.json();
-        return body;
-    }, []);
+            if (
+                ['dopDay', 'dopMon', 'dopYear'].every(
+                    field => formData[field] !== DEFAULT
+                )
+            ) {
+                dateOfPostage = new Date(
+                    `${formData.dopYear}-${formData.dopMon}-${formData.dopDay}`
+                ).toISOString();
+            }
+
+            setFormState(formStates.REQUESTING);
+
+            const result = await fetch('./codes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cf_challenge: formData.cf_challenge,
+                    tracking_code: {
+                        code: formData.code,
+                        reason: formData.reason,
+                        country_of_origin: formData.country_of_origin,
+                        date_of_postage: dateOfPostage ?? null,
+                        value_in_real:
+                            amount &&
+                            parseFloat(
+                                formData.value_in_real.replace(/^R\$(\s?)/, '')
+                            ).toFixed(2),
+                        reimbursed: formData.reimbursed ? true : false,
+                    },
+                }),
+            });
+
+            const body = await result.json();
+            const status = result.status;
+
+            if (status === 200) {
+                setFormState(formStates.SUCCESS);
+                reset();
+            } else {
+                setFormState(formStates.ERROR);
+            }
+
+            return body;
+        },
+        [reset]
+    );
 
     useEffect(() => {
         console.log('errors', errors);
+        Object.keys(errors)?.length
+            ? setFormState(formStates.ERROR)
+            : setFormState(formStates.INITIAL);
     }, [errors]);
 
     register('cf_challenge');
@@ -89,19 +122,7 @@ const Form: React.FC = () => {
     watch('data_use_consent');
 
     const onSubmit = async (formData: any) => {
-        const values = getValues(['dopDay', 'dopMon', 'dopYear']);
-        values.every(values => values !== DEFAULT) &&
-            setValue(
-                'date_of_postage',
-                new Date(
-                    `${formData.dopYear}-${formData.dopMon}-${formData.dopDay}`
-                ).toISOString()
-            );
-
-        const amount =
-            formData?.value_in_real?.replace(/\./g, '')?.replace(/,/g, '.') ||
-            '';
-        await submitPayload({ ...getValues(), value_in_real: amount });
+        await submitPayload({ ...getValues() });
     };
 
     return (
