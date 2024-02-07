@@ -67,9 +67,9 @@ const Form: React.FC = () => {
                     date_of_postage: formData.date_of_postage ?? null,
                     value_in_real:
                         formData?.value_in_real &&
-                        parseInt(
+                        parseFloat(
                             formData.value_in_real.replace(/^R\$(\s?)/, '')
-                        ),
+                        ).toFixed(2),
                     reimbursed: formData.reimbursed ? true : false,
                 },
             }),
@@ -95,9 +95,7 @@ const Form: React.FC = () => {
         const amount =
             formData?.value_in_real?.replace(/\./g, '')?.replace(/,/g, '.') ||
             '';
-        amount && setValue('value_in_real', amount);
-
-        await submitPayload(getValues());
+        await submitPayload({ ...getValues(), value_in_real: amount });
     };
 
     return (

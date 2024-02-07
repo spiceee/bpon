@@ -239,22 +239,20 @@ mod db {
                     &code_info.reimbursed,
                 ],
             )
-            .await;
+            .await?;
 
         println!("{code_info:?}");
         println!("{query:?}");
 
-        let _fake_tracking_code: TrackingCode = todo!();
-
-        // query
-        //     .iter()
-        //     .map(|row| {
-        //         println!("{row:?}");
-        //         TrackingCode::from_row_ref(row).unwrap()
-        //     })
-        //     .collect::<Vec<TrackingCode>>()
-        //     .pop()
-        //     .ok_or(MyError::NotFound) // more applicable for SELECTs
+        query
+            .iter()
+            .map(|row| {
+                println!("{row:?}");
+                TrackingCode::from_row_ref(row).unwrap()
+            })
+            .collect::<Vec<TrackingCode>>()
+            .pop()
+            .ok_or(MyError::NotFound) // more applicable for SELECTs
     }
 
     pub async fn get_tracking_codes(
