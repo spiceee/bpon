@@ -27,6 +27,7 @@ const Form: React.FC = () => {
     const [formState, setFormState] = useState(formStates.INITIAL);
 
     const turnstile = useTurnstile();
+    const buttonRef = useRef();
 
     const {
         handleSubmit,
@@ -81,6 +82,7 @@ const Form: React.FC = () => {
 
     register('cf_challenge');
     watch('value_in_real');
+    watch('data_use_consent');
 
     const onSubmit = async (formData: any) => {
         const values = getValues(['dopDay', 'dopMon', 'dopYear']);
@@ -275,7 +277,9 @@ const Form: React.FC = () => {
                     </div>
                 </div>
 
-                <button className="button">Envie</button>
+                <button id="submit-btn" className="button" disabled>
+                    Envie
+                </button>
             </form>
         </>
     );
