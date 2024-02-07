@@ -1,0 +1,1 @@
+alter table railway.tracking_codes drop constraint tracking_codes_user_id_fkey;
