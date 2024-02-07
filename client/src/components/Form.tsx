@@ -112,7 +112,7 @@ const Form: React.FC = () => {
             if (status === 200) {
                 reset();
                 setFormState(formStates.SUCCESS);
-            } else if (status === 400) {
+            } else if (status === 403) {
                 turnstile.reset();
             } else {
                 setFormState(formStates.ERROR);
