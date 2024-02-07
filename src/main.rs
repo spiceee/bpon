@@ -1,7 +1,10 @@
 #![allow(unused_imports)]
 use actix_files::{Files, NamedFile};
+use actix_limitation::{Limiter, RateLimiter};
+use actix_session::config::{BrowserSession, CookieContentSecurity};
 use actix_session::SessionExt;
-use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
+use actix_web::cookie::{Key, SameSite};
 use actix_web::{
     dev::ServiceRequest,
     error, get,
@@ -19,6 +22,17 @@ use tokio_postgres::types::FromSql;
 
 use async_stream::stream;
 use std::ops::DerefMut;
+
+#[actix_web::get("get_session")]
+async fn get_session(session: Session) -> impl actix_web::Responder {
+    match session.get::<String>("message") {
+        Ok(message_option) => match message_option {
+            Some(message) => HttpResponse::Ok().body(message),
+            None => HttpResponse::NotFound().body("Not set."),
+        },
+        Err(_) => HttpResponse::InternalServerError().body("Session error."),
+    }
+}
 
 #[get("/")]
 async fn index(req: HttpRequest, data: web::Data<AppState>) -> Result<HttpResponse> {
@@ -381,24 +395,9 @@ async fn default_handler(req_method: Method) -> Result<impl Responder> {
     }
 }
 
-/// response body
-async fn response_body(path: web::Path<String>) -> HttpResponse {
-    let name = path.into_inner();
-
-    HttpResponse::Ok()
-        .content_type(ContentType::plaintext())
-        .streaming(stream! {
-            yield Ok::<_, Infallible>(web::Bytes::from("Hello "));
-            yield Ok::<_, Infallible>(web::Bytes::from(name));
-            yield Ok::<_, Infallible>(web::Bytes::from("!"));
-        })
-}
-
 use crate::config::ExampleConfig;
 use ::config::Config;
-use actix_limitation::{Limiter, RateLimiter};
-use actix_session::config::{BrowserSession, CookieContentSecurity};
-use actix_web::cookie::{Key, SameSite};
+
 use dotenvy::dotenv;
 use std::env;
 use std::fs::read_to_string;
@@ -413,10 +412,8 @@ struct AppState {
 }
 
 fn session_middleware() -> SessionMiddleware<CookieSessionStore> {
-    let secret_key = env::var("PRIVATE_SESSION_SECRET").expect("Missing secret");
-
     SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
-        .cookie_name(String::from(secret_key)) // arbitrary name
+        .cookie_name(String::from("session-id")) // arbitrary name
         .cookie_secure(true) // https only
         .session_lifecycle(BrowserSession::default()) // expire at end of session
         .cookie_same_site(SameSite::Strict)
@@ -487,18 +484,8 @@ async fn main() -> std::io::Result<()> {
                     .route(web::post().to(add_user))
                     .route(web::get().to(get_users)),
             )
-            //
+            .service(get_session)
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
-            // .service(
-            //     web::resource("/").route(web::get().to(|req: HttpRequest| async move {
-            //         println!("{req:?}");
-            //         HttpResponse::Found()
-            //             .insert_header((header::LOCATION, "static/welcome.html"))
-            //             .finish()
-            //     })),
-            // )
-            // .service(welcome)
-            .service(web::resource("/async-body/{name}").route(web::get().to(response_body)))
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
             )
