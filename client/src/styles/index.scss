@@ -14,10 +14,8 @@ $small: 1120px;
 }
 
 #root {
-    height: 100vh;
+    height: auto;
     width: 100%;
-    position: absolute;
-    overflow: hidden;
 }
 
 h1 {
@@ -61,6 +59,7 @@ form {
     justify-content: center;
     height: 100%;
 
+    margin-top: 2rem;
     padding: 1rem 0;
 }
 
@@ -85,9 +84,7 @@ label.consentLabel {
 }
 
 .wrapper {
-    position: relative;
-    top: 50%;
-    transform: translateY(-60%);
+    margin-top: 1rem;
 }
 
 .inputWrapper {
@@ -174,6 +171,10 @@ footer {
     position: absolute;
     bottom: 2rem;
     left: 2rem;
+}
+
+footer a {
+    color: #32cd32;
 }
 
 .copyright {
