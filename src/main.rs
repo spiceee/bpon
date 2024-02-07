@@ -446,25 +446,12 @@ async fn main() -> std::io::Result<()> {
 
     println!("migration_report {:#?}", migration_report);
 
-    // let limiter = web::Data::new(
-    //     Limiter::builder(redis_url)
-    //         .key_by(|req: &ServiceRequest| {
-    //             req.get_session()
-    //                 .get(&"session-id")
-    //                 .unwrap_or_else(|_| req.cookie(&"rate-api-id").map(|c| c.to_string()))
-    //         })
-    //         .limit(1000)
-    //         .period(Duration::from_secs(1200)) // 20 minutes
-    //         .build()
-    //         .unwrap(),
-    // );
-
     let client = redis::Client::open(redis_url).unwrap();
     let manager = ConnectionManager::new(client).await.unwrap();
     let backend = RedisBackend::builder(manager).build();
 
     let server = HttpServer::new(move || {
-        let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 5)
+        let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 70) // 70 requests in 60 seconds
             .real_ip_key()
             .build();
         let middleware = RateLimiter::builder(backend.clone(), input)
