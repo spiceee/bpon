@@ -2,6 +2,7 @@
 use actix_files::{Files, NamedFile};
 use actix_session::{storage::SessionStore, Session, SessionMiddleware};
 use actix_web::{
+    dev::ServiceRequest,
     error, get,
     http::{
         header::{self, ContentType},
@@ -435,6 +436,10 @@ use std::fs::read_to_string;
 use std::sync::Mutex;
 use tokio_postgres::NoTls;
 
+use actix_limitation::{Limiter, RateLimiter};
+use actix_session::SessionExt as _;
+use std::{sync::Arc, time::Duration};
+
 struct AppState {
     js_source: Mutex<String>, // <- Mutex is necessary to mutate safely across threads
 }
@@ -460,6 +465,7 @@ async fn main() -> std::io::Result<()> {
 
     let port = env::var("PORT").expect("Missing port number");
     let port = port.parse::<u16>().expect("Invalid port given");
+    let redis_url = env::var("REDIS_PRIVATE_URL").expect("Missing Redis URL");
 
     let migration_report = embedded::migrations::runner()
         .run_async(client.deref_mut())
@@ -467,9 +473,24 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     println!("migration_report {:#?}", migration_report);
-    //
+
+    let limiter = web::Data::new(
+        Limiter::builder(redis_url)
+            .key_by(|req: &ServiceRequest| {
+                req.get_session()
+                    .get(&"session-id")
+                    .unwrap_or_else(|_| req.cookie(&"rate-api-id").map(|c| c.to_string()))
+            })
+            .limit(1000)
+            .period(Duration::from_secs(1200)) // 20 minutes
+            .build()
+            .unwrap(),
+    );
+
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(RateLimiter::default())
+            .app_data(limiter.clone())
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(AppState {
                 js_source: Mutex::new(
