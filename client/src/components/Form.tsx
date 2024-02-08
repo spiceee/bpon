@@ -59,7 +59,6 @@ const Form: React.FC = () => {
         return fetch(`./codes/${code}`)
             .then(response => response.json())
             .then(codes => {
-                console.log(codes);
                 codes?.length ? setCodeExists(true) : setCodeExists(false);
             });
     }, []);
@@ -131,7 +130,6 @@ const Form: React.FC = () => {
     );
 
     useEffect(() => {
-        console.log('errors', errors);
         Object.keys(errors)?.length && setFormState(formStates.ERROR);
     }, [errors]);
 
@@ -152,10 +150,7 @@ const Form: React.FC = () => {
         <>
             <Turnstile
                 sitekey={PUBLIC_CAPTCHA_SITE_KEY}
-                onVerify={token => {
-                    console.log('token', token);
-                    setValue('cf_challenge', token);
-                }}
+                onVerify={token => setValue('cf_challenge', token)}
             />
 
             <div className="summary">
