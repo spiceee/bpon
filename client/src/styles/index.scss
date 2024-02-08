@@ -22,6 +22,10 @@ h1 {
     font-size: 2rem;
     font-weight: 900;
     line-height: 150%;
+
+    @media screen and (max-width: $small) {
+        font-size: 1.8rem;
+    }
 }
 
 p {
@@ -40,6 +44,12 @@ input,
 select {
     padding: 0.3rem;
     border-radius: 0.5rem;
+}
+
+.countrySelect {
+    @media screen and (max-width: $small) {
+        width: 100%;
+    }
 }
 
 button {
@@ -185,6 +195,10 @@ nav ul li {
 
 nav ul li:first-child {
     font-size: 2.5rem;
+
+    @media screen and (max-width: $small) {
+        font-size: 2rem;
+    }
 }
 
 nav ul li a {

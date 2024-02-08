@@ -1,8 +1,6 @@
 import React from 'react';
 import Link from '../components/Link';
 
-import reactLogo from '!!raw-loader!../../public/react-logo.svg';
-import rustLogo from '!!raw-loader!../../public/rust-logo.svg';
 import rustCrab from '../../public/cuddlyferris.png';
 
 const Footer: React.FC = () => {

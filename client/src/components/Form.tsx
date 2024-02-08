@@ -161,9 +161,12 @@ const Form: React.FC = () => {
 
                 <p>
                     Desde Outubro de 2023, a Receita Federal e os Correios têm
-                    marcado como <strong>Importação Não Autorizada</strong>{' '}
-                    encomendas de forma aparentemente aleatória. Isso significa
-                    que a encomenda é devolvida ao remetente sem maiores
+                    marcado, de forma aparentemente aleatória, como{' '}
+                    <strong>Importação Não Autorizada</strong> encomendas que
+                    são enviadas ao Brasil.
+                </p>
+                <p>
+                    A encomenda é devolvida ao remetente sem maiores
                     explicações. A Receita Federal e os Correios não fornecem
                     informações sobre o motivo da devolução, e o remetente não é
                     obrigado a reembolsar o valor da encomenda.
@@ -301,6 +304,7 @@ const Form: React.FC = () => {
                                 })}
                                 defaultValue={DEFAULT}
                                 id="country_of_origin"
+                                className="countrySelect"
                             >
                                 {COUNTRIES.map(country => (
                                     <option
