@@ -34,7 +34,6 @@ const App: React.FC = () => {
                     property="og:site_name"
                     content="Importação Não Autorizada"
                 />
-                <meta property="og:description" content="description of site" />
                 <meta property="og:type" content="Website" />
                 <title>Importação Não Autorizada</title>
                 <link rel="icon" type="image/png" href={favicon} />
