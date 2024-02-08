@@ -426,9 +426,6 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     let config: ExampleConfig = config_.try_deserialize().unwrap();
-
-    println!("{:?}", config);
-
     let pool = config.pg.create_pool(None, NoTls).unwrap();
 
     // Perform migrations
