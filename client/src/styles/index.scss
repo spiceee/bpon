@@ -2,8 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,500;1,900&display=swap');
 
 $poppins: 'Poppins', sans-serif;
-$medium: 1650px;
-$small: 1120px;
+$medium: 964px;
+$small-tablet: 820px;
+$small: 484px;
 
 * {
     margin: 0;
@@ -91,7 +92,12 @@ label.consentLabel {
 }
 
 .fields {
+    self-align: center;
     margin-top: 1.2rem;
+
+    @media screen and (max-width: $small-tablet) {
+        margin: 0 1rem;
+    }
 
     @media screen and (max-width: $small) {
         margin: 0 2rem;
@@ -113,8 +119,12 @@ label.consentLabel {
         max-width: 50rem;
     }
 
+    @media screen and (max-width: $small-tablet) {
+        max-width: unset;
+    }
+
     @media screen and (max-width: $small) {
-        max-width: 22rem;
+        max-width: unset;
     }
 }
 
