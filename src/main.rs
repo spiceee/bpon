@@ -68,12 +68,25 @@ mod models {
     use tokio_pg_mapper_derive::PostgresMapper;
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
+    #[pg_mapper(table = "posts")]
+    pub struct Post {
+        pub id: i32,
+        pub title: Option<String>,
+        pub status: String,
+        pub created_at: Option<DateTime<Utc>>,
+        pub updated_at: Option<DateTime<Utc>>,
+        pub published_at: Option<DateTime<Utc>>,
+        pub body: Option<String>,
+        pub summary: Option<String>,
+    }
+
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "tracking_codes")]
     pub struct TrackingCode {
         pub code: String,
         pub reason: String,
-        // pub created_at: DateTime<Utc>,
-        // pub updated_at: DateTime<Utc>,
+        pub created_at: Option<DateTime<Utc>>,
+        pub updated_at: Option<DateTime<Utc>>,
         // pub user_id: i32,
         pub country_of_origin: String,
         pub date_of_postage: Option<DateTime<Utc>>,
@@ -143,8 +156,24 @@ mod db {
 
     use crate::{
         errors::MyError,
-        models::{TrackingCode, User},
+        models::{Post, TrackingCode, User},
     };
+
+    pub async fn get_posts(client: &Client) -> Result<Vec<Post>, MyError> {
+        let posts_sql = include_str!("../sql/get_posts.sql");
+        let posts_sql = posts_sql.replace("$table_fields", &Post::sql_table_fields());
+        let posts_sql = posts_sql.replace("$limit", 10.to_string().as_str());
+        let posts_sql = client.prepare(&posts_sql).await.unwrap();
+
+        let results = client
+            .query(&posts_sql, &[])
+            .await?
+            .iter()
+            .map(|row| Post::from_row_ref(row).unwrap())
+            .collect::<Vec<Post>>();
+
+        Ok(results)
+    }
 
     pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
         let user_sql = include_str!("../sql/get_users.sql");
@@ -270,12 +299,24 @@ mod handlers {
     use crate::{
         db,
         errors::MyError,
-        models::{CodePayload, TrackingCode, User},
+        models::{CodePayload, Post, TrackingCode, User},
     };
     use actix_web::{web, Error, HttpRequest, HttpResponse};
     use cf_turnstile::{SiteVerifyRequest, TurnstileClient};
     use deadpool_postgres::{Client, Pool};
     use std::env;
+
+    pub async fn get_posts(
+        db_pool: web::Data<Pool>,
+        path: web::Path<String>,
+    ) -> Result<HttpResponse, Error> {
+        let _page = path.into_inner().parse::<i32>().unwrap();
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+        let posts = db::get_posts(&client).await?;
+
+        Ok(HttpResponse::Ok().json(posts))
+    }
 
     pub async fn get_tracking_codes(
         db_pool: web::Data<Pool>,
@@ -399,7 +440,9 @@ use actix_extensible_rate_limit::{
 use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
 
-use handlers::{add_tracking_code, add_user, get_tracking_code, get_tracking_codes, get_users};
+use handlers::{
+    add_tracking_code, add_user, get_posts, get_tracking_code, get_tracking_codes, get_users,
+};
 
 struct AppState {
     js_source: Mutex<String>,
@@ -472,6 +515,7 @@ async fn main() -> std::io::Result<()> {
                     .route(web::get().to(get_users)),
             )
             .service(get_session)
+            .service(web::resource("/posts.json").route(web::get().to(get_posts)))
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),

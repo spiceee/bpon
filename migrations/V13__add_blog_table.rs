@@ -12,7 +12,6 @@ pub fn migration() -> String {
         t.add_column("published_at", types::custom("TIMESTAMPTZ").nullable(true));
         t.add_column("created_at", types::custom("TIMESTAMPTZ").default("now()"));
         t.add_column("updated_at", types::custom("TIMESTAMPTZ").default("now()"));
-        t.add_index("user_id", types::index(vec!["user_id"]));
         t.add_index("status", types::index(vec!["status"]));
     });
 
