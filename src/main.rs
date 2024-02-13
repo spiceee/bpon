@@ -6,51 +6,10 @@ use actix_web::{
     http::{Method, StatusCode},
     web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-
+use deadpool_postgres::{Client, Pool};
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
 use std::ops::DerefMut;
-
-#[actix_web::get("get_session")]
-async fn get_session(session: Session) -> impl actix_web::Responder {
-    match session.get::<String>("message") {
-        Ok(message_option) => match message_option {
-            Some(message) => HttpResponse::Ok().body(message),
-            None => HttpResponse::NotFound().body("Not set."),
-        },
-        Err(_) => HttpResponse::InternalServerError().body("Session error."),
-    }
-}
-
-#[get("/")]
-async fn index(req: HttpRequest, data: web::Data<AppState>) -> Result<HttpResponse> {
-    let props = format!(
-        r##"{{
-            "location": "{}",
-            "context": {{}}
-        }}"##,
-        req.uri()
-    );
-
-    let source = data.js_source.lock().unwrap();
-    let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
-    let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
-
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .streaming(body))
-}
-
-/// favicon handler
-#[get("/favicon")]
-async fn favicon() -> Result<impl Responder> {
-    Ok(NamedFile::open("../static/favicon.ico")?)
-}
-
-mod embedded {
-    use refinery::embed_migrations;
-    embed_migrations!("migrations");
-}
 
 mod config {
     use serde::Deserialize;
@@ -70,7 +29,7 @@ mod models {
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "posts")]
     pub struct Post {
-        pub id: i32,
+        // pub id: i32,
         pub title: Option<String>,
         pub status: String,
         pub created_at: Option<DateTime<Utc>>,
@@ -163,6 +122,7 @@ mod db {
         let posts_sql = include_str!("../sql/get_posts.sql");
         let posts_sql = posts_sql.replace("$table_fields", &Post::sql_table_fields());
         let posts_sql = posts_sql.replace("$limit", 10.to_string().as_str());
+        let posts_sql = posts_sql.replace("$offset", 0.to_string().as_str());
         let posts_sql = client.prepare(&posts_sql).await.unwrap();
 
         let results = client
@@ -422,9 +382,12 @@ async fn default_handler(req_method: Method) -> Result<impl Responder> {
     }
 }
 
-use crate::config::ExampleConfig;
+use crate::{
+    config::ExampleConfig,
+    errors::MyError,
+    models::{CodePayload, Post, TrackingCode, User},
+};
 use ::config::Config;
-
 use dotenvy::dotenv;
 use std::env;
 use std::fs::read_to_string;
@@ -443,6 +406,71 @@ use redis::AsyncCommands;
 use handlers::{
     add_tracking_code, add_user, get_posts, get_tracking_code, get_tracking_codes, get_users,
 };
+
+#[actix_web::get("get_session")]
+async fn get_session(session: Session) -> impl actix_web::Responder {
+    match session.get::<String>("message") {
+        Ok(message_option) => match message_option {
+            Some(message) => HttpResponse::Ok().body(message),
+            None => HttpResponse::NotFound().body("Not set."),
+        },
+        Err(_) => HttpResponse::InternalServerError().body("Session error."),
+    }
+}
+
+#[get("/")]
+async fn index(
+    req: HttpRequest,
+    data: web::Data<AppState>,
+    db_pool: web::Data<Pool>,
+) -> Result<HttpResponse> {
+    let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+    let posts = db::get_posts(&client).await?;
+    let source = data.js_source.lock().unwrap();
+
+    match posts.into_iter().nth(0) {
+        Some(post) => {
+            let post_props = &serde_json::to_string(&post).unwrap();
+
+            println!("{post_props:?}");
+
+            let res_body = Ssr::render_to_string(&source, "SSR", Some(&post_props));
+            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/html; charset=utf-8")
+                .streaming(body))
+        }
+        None => {
+            let props = format!(
+                r##"{{
+                    "location": "{}",
+                    "context": {{}}
+                }}"##,
+                req.uri()
+            );
+
+            let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
+            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/html; charset=utf-8")
+                .streaming(body))
+        }
+    }
+}
+
+/// favicon handler
+#[get("/favicon")]
+async fn favicon() -> Result<impl Responder> {
+    Ok(NamedFile::open("../static/favicon.ico")?)
+}
+
+mod embedded {
+    use refinery::embed_migrations;
+    embed_migrations!("migrations");
+}
 
 struct AppState {
     js_source: Mutex<String>,
