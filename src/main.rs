@@ -1,4 +1,4 @@
-#![allow(unused_imports)]
+#![allow(unused_imports, non_snake_case)] // refinery uses __ in migration filenames
 use actix_files::{Files, NamedFile};
 use actix_session::Session;
 use actix_web::{
@@ -10,6 +10,11 @@ use deadpool_postgres::{Client, Pool};
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
 use std::ops::DerefMut;
+
+mod embedded {
+    use refinery::embed_migrations;
+    embed_migrations!("migrations");
+}
 
 mod config {
     use serde::Deserialize;
@@ -465,11 +470,6 @@ async fn index(
 #[get("/favicon")]
 async fn favicon() -> Result<impl Responder> {
     Ok(NamedFile::open("../static/favicon.ico")?)
-}
-
-mod embedded {
-    use refinery::embed_migrations;
-    embed_migrations!("migrations");
 }
 
 struct AppState {
