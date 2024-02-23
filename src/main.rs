@@ -428,8 +428,10 @@ async fn index(
     req: HttpRequest,
     data: web::Data<AppState>,
     db_pool: web::Data<Pool>,
+    config: web::Data<AppState>,
 ) -> Result<HttpResponse> {
     let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+    let mut _redis = config.redis.clone();
 
     let posts = db::get_posts(&client).await?;
     let source = data.js_source.lock().unwrap();
@@ -474,6 +476,7 @@ async fn favicon() -> Result<impl Responder> {
 
 struct AppState {
     js_source: Mutex<String>,
+    redis: ConnectionManager,
 }
 
 // fn session_middleware() -> SessionMiddleware<CookieSessionStore> {
@@ -516,7 +519,14 @@ async fn main() -> std::io::Result<()> {
 
     let client = redis::Client::open(redis_url).unwrap();
     let manager = ConnectionManager::new(client).await.unwrap();
-    let backend = RedisBackend::builder(manager).build();
+    let backend = RedisBackend::builder(manager.clone()).build();
+
+    let data = web::Data::new(AppState {
+        redis: manager,
+        js_source: Mutex::new(
+            read_to_string("./dist/index.js").expect("Failed to load the resource."),
+        ),
+    });
 
     let server = HttpServer::new(move || {
         let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 70) // 70 requests in 60 seconds
@@ -529,11 +539,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware)
             .app_data(web::Data::new(pool.clone()))
-            .app_data(web::Data::new(AppState {
-                js_source: Mutex::new(
-                    read_to_string("./dist/index.js").expect("Failed to load the resource."),
-                ),
-            }))
+            .app_data(data.clone())
             .service(Files::new("/styles", "./dist/styles/").show_files_listing())
             .service(Files::new("/images", "./dist/images/").show_files_listing())
             .service(Files::new("/scripts", "./dist/scripts/").show_files_listing())
