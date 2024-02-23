@@ -17,6 +17,23 @@ export const Index = (params: string | undefined): string => {
    <title>Importação Não Autorizada</title>
    ${helmetData.title.toString()}
    ${helmetData.meta.toString()}
+   <meta
+       name="description"
+       content="O que está acontecendo com as encomendas que tentam entrar no Brasil? Por que nossas importações estão sendo não autorizadas? Queremos descobrir com a sua ajuda!"
+   />
+   <meta property="og:image" content={og} />
+   <meta property="og:image:width" content="703" />
+   <meta property="og:image:height" content="369" />
+   <meta property="og:title" content="Importação Não Autorizada" />
+   <meta
+       property="og:url"
+       content="https://importacaonaoautorizada.com"
+   />
+   <meta
+       property="og:site_name"
+       content="Importação Não Autorizada"
+   />
+   <meta property="og:type" content="Website" />
    <link rel="stylesheet" href="./styles/ssr.css">
 </head>
 <body>
