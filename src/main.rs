@@ -1,4 +1,4 @@
-#![allow(unused_imports)]
+#![allow(unused_imports, non_snake_case)] // refinery uses __ in migration filenames
 use actix_files::{Files, NamedFile};
 use actix_session::Session;
 use actix_web::{
@@ -6,46 +6,10 @@ use actix_web::{
     http::{Method, StatusCode},
     web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
 };
-
+use deadpool_postgres::{Client, Pool};
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
 use std::ops::DerefMut;
-
-#[actix_web::get("get_session")]
-async fn get_session(session: Session) -> impl actix_web::Responder {
-    match session.get::<String>("message") {
-        Ok(message_option) => match message_option {
-            Some(message) => HttpResponse::Ok().body(message),
-            None => HttpResponse::NotFound().body("Not set."),
-        },
-        Err(_) => HttpResponse::InternalServerError().body("Session error."),
-    }
-}
-
-#[get("/")]
-async fn index(req: HttpRequest, data: web::Data<AppState>) -> Result<HttpResponse> {
-    let props = format!(
-        r##"{{
-            "location": "{}",
-            "context": {{}}
-        }}"##,
-        req.uri()
-    );
-
-    let source = data.js_source.lock().unwrap();
-    let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
-    let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
-
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type("text/html; charset=utf-8")
-        .streaming(body))
-}
-
-/// favicon handler
-#[get("/favicon")]
-async fn favicon() -> Result<impl Responder> {
-    Ok(NamedFile::open("../static/favicon.ico")?)
-}
 
 mod embedded {
     use refinery::embed_migrations;
@@ -68,12 +32,25 @@ mod models {
     use tokio_pg_mapper_derive::PostgresMapper;
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
+    #[pg_mapper(table = "posts")]
+    pub struct Post {
+        // pub id: i32,
+        pub title: Option<String>,
+        pub status: String,
+        pub created_at: Option<DateTime<Utc>>,
+        pub updated_at: Option<DateTime<Utc>>,
+        pub published_at: Option<DateTime<Utc>>,
+        pub body: Option<String>,
+        pub summary: Option<String>,
+    }
+
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "tracking_codes")]
     pub struct TrackingCode {
         pub code: String,
         pub reason: String,
-        // pub created_at: DateTime<Utc>,
-        // pub updated_at: DateTime<Utc>,
+        pub created_at: Option<DateTime<Utc>>,
+        pub updated_at: Option<DateTime<Utc>>,
         // pub user_id: i32,
         pub country_of_origin: String,
         pub date_of_postage: Option<DateTime<Utc>>,
@@ -143,8 +120,25 @@ mod db {
 
     use crate::{
         errors::MyError,
-        models::{TrackingCode, User},
+        models::{Post, TrackingCode, User},
     };
+
+    pub async fn get_posts(client: &Client) -> Result<Vec<Post>, MyError> {
+        let posts_sql = include_str!("../sql/get_posts.sql");
+        let posts_sql = posts_sql.replace("$table_fields", &Post::sql_table_fields());
+        let posts_sql = posts_sql.replace("$limit", 10.to_string().as_str());
+        let posts_sql = posts_sql.replace("$offset", 0.to_string().as_str());
+        let posts_sql = client.prepare(&posts_sql).await.unwrap();
+
+        let results = client
+            .query(&posts_sql, &[])
+            .await?
+            .iter()
+            .map(|row| Post::from_row_ref(row).unwrap())
+            .collect::<Vec<Post>>();
+
+        Ok(results)
+    }
 
     pub async fn get_users(client: &Client) -> Result<Vec<User>, MyError> {
         let user_sql = include_str!("../sql/get_users.sql");
@@ -270,12 +264,24 @@ mod handlers {
     use crate::{
         db,
         errors::MyError,
-        models::{CodePayload, TrackingCode, User},
+        models::{CodePayload, Post, TrackingCode, User},
     };
     use actix_web::{web, Error, HttpRequest, HttpResponse};
     use cf_turnstile::{SiteVerifyRequest, TurnstileClient};
     use deadpool_postgres::{Client, Pool};
     use std::env;
+
+    pub async fn get_posts(
+        db_pool: web::Data<Pool>,
+        path: web::Path<String>,
+    ) -> Result<HttpResponse, Error> {
+        let _page = path.into_inner().parse::<i32>().unwrap();
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+        let posts = db::get_posts(&client).await?;
+
+        Ok(HttpResponse::Ok().json(posts))
+    }
 
     pub async fn get_tracking_codes(
         db_pool: web::Data<Pool>,
@@ -381,9 +387,12 @@ async fn default_handler(req_method: Method) -> Result<impl Responder> {
     }
 }
 
-use crate::config::ExampleConfig;
+use crate::{
+    config::ExampleConfig,
+    errors::MyError,
+    models::{CodePayload, Post, TrackingCode, User},
+};
 use ::config::Config;
-
 use dotenvy::dotenv;
 use std::env;
 use std::fs::read_to_string;
@@ -399,10 +408,75 @@ use actix_extensible_rate_limit::{
 use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
 
-use handlers::{add_tracking_code, add_user, get_tracking_code, get_tracking_codes, get_users};
+use handlers::{
+    add_tracking_code, add_user, get_posts, get_tracking_code, get_tracking_codes, get_users,
+};
+
+#[actix_web::get("get_session")]
+async fn get_session(session: Session) -> impl actix_web::Responder {
+    match session.get::<String>("message") {
+        Ok(message_option) => match message_option {
+            Some(message) => HttpResponse::Ok().body(message),
+            None => HttpResponse::NotFound().body("Not set."),
+        },
+        Err(_) => HttpResponse::InternalServerError().body("Session error."),
+    }
+}
+
+#[get("/")]
+async fn index(
+    req: HttpRequest,
+    data: web::Data<AppState>,
+    db_pool: web::Data<Pool>,
+    config: web::Data<AppState>,
+) -> Result<HttpResponse> {
+    let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+    let mut _redis = config.redis.clone();
+
+    let posts = db::get_posts(&client).await?;
+    let source = data.js_source.lock().unwrap();
+
+    match posts.into_iter().nth(0) {
+        Some(post) => {
+            let post_props = &serde_json::to_string(&post).unwrap();
+
+            println!("{post_props:?}");
+
+            let res_body = Ssr::render_to_string(&source, "SSR", Some(&post_props));
+            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/html; charset=utf-8")
+                .streaming(body))
+        }
+        None => {
+            let props = format!(
+                r##"{{
+                    "location": "{}",
+                    "context": {{}}
+                }}"##,
+                req.uri()
+            );
+
+            let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
+            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/html; charset=utf-8")
+                .streaming(body))
+        }
+    }
+}
+
+/// favicon handler
+#[get("/favicon")]
+async fn favicon() -> Result<impl Responder> {
+    Ok(NamedFile::open("../static/favicon.ico")?)
+}
 
 struct AppState {
     js_source: Mutex<String>,
+    redis: ConnectionManager,
 }
 
 // fn session_middleware() -> SessionMiddleware<CookieSessionStore> {
@@ -445,7 +519,14 @@ async fn main() -> std::io::Result<()> {
 
     let client = redis::Client::open(redis_url).unwrap();
     let manager = ConnectionManager::new(client).await.unwrap();
-    let backend = RedisBackend::builder(manager).build();
+    let backend = RedisBackend::builder(manager.clone()).build();
+
+    let data = web::Data::new(AppState {
+        redis: manager,
+        js_source: Mutex::new(
+            read_to_string("./dist/index.js").expect("Failed to load the resource."),
+        ),
+    });
 
     let server = HttpServer::new(move || {
         let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 70) // 70 requests in 60 seconds
@@ -458,11 +539,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware)
             .app_data(web::Data::new(pool.clone()))
-            .app_data(web::Data::new(AppState {
-                js_source: Mutex::new(
-                    read_to_string("./dist/index.js").expect("Failed to load the resource."),
-                ),
-            }))
+            .app_data(data.clone())
             .service(Files::new("/styles", "./dist/styles/").show_files_listing())
             .service(Files::new("/images", "./dist/images/").show_files_listing())
             .service(Files::new("/scripts", "./dist/scripts/").show_files_listing())
@@ -472,6 +549,7 @@ async fn main() -> std::io::Result<()> {
                     .route(web::get().to(get_users)),
             )
             .service(get_session)
+            .service(web::resource("/posts.json").route(web::get().to(get_posts)))
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),

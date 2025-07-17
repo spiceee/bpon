@@ -1,0 +1,1 @@
+SELECT $table_fields FROM posts order by created_at desc limit $limit offset $offset;
