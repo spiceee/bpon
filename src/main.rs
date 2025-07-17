@@ -271,6 +271,18 @@ mod handlers {
     use deadpool_postgres::{Client, Pool};
     use std::env;
 
+    pub async fn get_graph_nodes(
+        db_pool: web::Data<Pool>,
+        path: web::Path<String>,
+    ) -> Result<HttpResponse, Error> {
+        let _page = path.into_inner().parse::<i32>().unwrap();
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+        let posts = db::get_posts(&client).await?;
+
+        Ok(HttpResponse::Ok().json(posts))
+    }
+
     pub async fn get_posts(
         db_pool: web::Data<Pool>,
         path: web::Path<String>,
@@ -409,7 +421,8 @@ use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
 
 use handlers::{
-    add_tracking_code, add_user, get_posts, get_tracking_code, get_tracking_codes, get_users,
+    add_tracking_code, add_user, get_graph_nodes, get_posts, get_tracking_code, get_tracking_codes,
+    get_users,
 };
 
 #[actix_web::get("get_session")]
@@ -550,6 +563,7 @@ async fn main() -> std::io::Result<()> {
             )
             .service(get_session)
             .service(web::resource("/posts.json").route(web::get().to(get_posts)))
+            .service(web::resource("/nodes.json").route(web::get().to(get_graph_nodes)))
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
