@@ -251,7 +251,7 @@ const LineChartGraph: React.FC = () => {
                             fill="#475569"
                             fontWeight="500"
                         >
-                            Month
+                            Mês
                         </text>
                         <text
                             x={-40}
@@ -262,7 +262,7 @@ const LineChartGraph: React.FC = () => {
                             fontWeight="500"
                             transform={`rotate(-90, -40, ${innerHeight / 2})`}
                         >
-                            Node Inputs
+                            Ocorrências reportadas
                         </text>
                     </Group>
                 </svg>
