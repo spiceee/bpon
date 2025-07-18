@@ -397,6 +397,11 @@ mod handlers {
     }
 }
 
+async fn health_check() -> Result<HttpResponse, actix_web::Error> {
+    let status = serde_json::json!({ "status": "OK" });
+    Ok(HttpResponse::Ok().json(status))
+}
+
 async fn default_handler(req_method: Method) -> Result<impl Responder> {
     match req_method {
         Method::GET => {
@@ -574,6 +579,7 @@ async fn main() -> std::io::Result<()> {
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
             )
             .service(web::resource("/codes/{code}").route(web::get().to(get_tracking_code)))
+            .route("/health_check", web::get().to(health_check))
             .default_service(web::to(default_handler))
             .service(index)
     })
