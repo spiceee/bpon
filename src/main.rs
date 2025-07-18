@@ -12,6 +12,15 @@ use ssr_rs::Ssr;
 use std::cell::RefCell;
 use std::ops::DerefMut;
 
+thread_local! {
+   static SSR: RefCell<Ssr<'static, 'static>> = RefCell::new(
+       Ssr::from(
+           read_to_string("./dist/index.js").unwrap(),
+           "SSR"
+           ).unwrap()
+   )
+}
+
 mod embedded {
     use refinery::embed_migrations;
     embed_migrations!("migrations");
@@ -437,15 +446,6 @@ async fn get_session(session: Session) -> impl actix_web::Responder {
     }
 }
 
-thread_local! {
-   static SSR: RefCell<Ssr<'static, 'static>> = RefCell::new(
-       Ssr::from(
-           read_to_string("./dist/index.js").unwrap(),
-           "SSR"
-           ).unwrap()
-   )
-}
-
 #[get("/")]
 async fn index(
     req: HttpRequest,
@@ -459,17 +459,18 @@ async fn index(
     match posts.into_iter().nth(0) {
         Some(post) => {
             let post_props = &serde_json::to_string(&post).unwrap();
-            let body = SSR.with(|ssr| {
+            println!("{post_props:?}");
+
+            let response_body = SSR.with(|ssr| {
                 ssr.borrow_mut()
                     .render_to_string(Some(&post_props))
                     .unwrap()
             });
-
-            println!("{post_props:?}");
+            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
 
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
-                .body(body))
+                .streaming(body))
         }
         None => {
             let props = format!(
@@ -479,11 +480,13 @@ async fn index(
                 }}"##,
                 req.uri()
             );
-            let body = SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(&props)).unwrap());
+            let response_body =
+                SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(&props)).unwrap());
+            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
 
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
-                .body(body))
+                .streaming(body))
         }
     }
 }
@@ -541,6 +544,7 @@ async fn main() -> std::io::Result<()> {
     let backend = RedisBackend::builder(manager.clone()).build();
 
     let data = web::Data::new(AppState { redis: manager });
+    Ssr::create_platform();
 
     let server = HttpServer::new(move || {
         let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 70) // 70 requests in 60 seconds
