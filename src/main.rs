@@ -66,16 +66,13 @@ mod models {
         pub date_of_postage: Option<DateTime<Utc>>,
         pub value_in_real: Decimal,
         pub reimbursed: bool,
-        pub month: Option<DateTime<Utc>>,
-        pub occurrences: i32,
     }
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "tracking_codes")]
     pub struct TrackingCodeCount {
-        pub code: String,
         pub month: Option<DateTime<Utc>>,
-        pub occurrences: i32,
+        pub occurrences: i64,
     }
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
@@ -309,16 +306,11 @@ mod handlers {
     use deadpool_postgres::{Client, Pool};
     use std::env;
 
-    pub async fn get_graph_nodes(
-        db_pool: web::Data<Pool>,
-        path: web::Path<String>,
-    ) -> Result<HttpResponse, Error> {
-        let _page = path.into_inner().parse::<i32>().unwrap();
+    pub async fn get_graph_nodes(db_pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
         let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+        let tracking_code_counts = db::get_tracking_code_counts(&client).await?;
 
-        let posts = db::get_posts(&client).await?;
-
-        Ok(HttpResponse::Ok().json(posts))
+        Ok(HttpResponse::Ok().json(tracking_code_counts))
     }
 
     pub async fn get_posts(
