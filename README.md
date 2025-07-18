@@ -6,6 +6,8 @@ Run docker to start the db and the redis instance:
 docker compose up -d
 ```
 
+Move .env.example to .env and fill in the values.
+
 BPON uses refinery and will automatically update the database schema.
 
 ```
