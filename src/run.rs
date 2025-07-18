@@ -34,6 +34,17 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     Ok(server)
 }
 
+// use std::cell::RefCell;
+
+// thread_local! {
+//    static SSR: RefCell<Ssr<'static, 'static>> = RefCell::new(
+//        Ssr::from(
+//            read_to_string("./client/dist/ssr/index.js").unwrap(),
+//            "SSR"
+//            ).unwrap()
+//    )
+// }
+
 #[get("/")]
 async fn index(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
     let props = format!(
@@ -45,6 +56,8 @@ async fn index(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
     );
 
     let source = data.js_source.lock().unwrap();
+
+    println!("js_source is {:#?}", source);
 
     //let source = read_to_string("./dist/index.js").expect("Failed to load the resource.");
 
