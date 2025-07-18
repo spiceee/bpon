@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import Turnstile, { useTurnstile } from 'react-turnstile';
 
@@ -283,7 +282,9 @@ const Form: React.FC = () => {
                                 Valor estimado total em Reais R$
                             </label>
                             <Money
+                                // @ts-expect-error fieldName could be defined within component
                                 register={register}
+                                // @ts-expect-error fieldName could be defined within component
                                 setValue={setValue}
                                 fieldName="value_in_real"
                             />

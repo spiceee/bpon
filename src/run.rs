@@ -5,24 +5,24 @@ use actix_web::{
 };
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
+use std::cell::RefCell;
 use std::fs::read_to_string;
 use std::net::TcpListener;
-use std::sync::Mutex;
 
-struct AppState {
-    js_source: Mutex<String>, // <- Mutex is necessary to mutate safely across threads
+thread_local! {
+    static SSR: RefCell<Ssr<'static, 'static>> = RefCell::new(
+        Ssr::from(
+            read_to_string("./dist/index.js").unwrap(),
+            "SSR"
+        ).unwrap()
+    )
 }
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
-    let server = HttpServer::new(move || {
-        let state = web::Data::new(AppState {
-            js_source: Mutex::new(
-                read_to_string("./dist/index.js").expect("Failed to load the resource."),
-            ),
-        });
+    Ssr::create_platform();
 
+    let server = HttpServer::new(move || {
         App::new()
-            .app_data(state)
             .service(Files::new("/styles", "./dist/styles/").show_files_listing())
             .service(Files::new("/images", "./dist/images/").show_files_listing())
             .service(Files::new("/scripts", "./dist/scripts/").show_files_listing())
@@ -35,7 +35,7 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
 }
 
 #[get("/")]
-async fn index(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
+async fn index(req: HttpRequest) -> impl Responder {
     let props = format!(
         r##"{{
             "location": "{}",
@@ -44,12 +44,7 @@ async fn index(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
         req.uri()
     );
 
-    let source = data.js_source.lock().unwrap();
-
-    //let source = read_to_string("./dist/index.js").expect("Failed to load the resource.");
-
-    let response_body = Ssr::render_to_string(&source, "SSR", Some(&props));
-
+    let response_body = SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(&props)).unwrap());
     let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
 
     HttpResponse::build(StatusCode::OK)

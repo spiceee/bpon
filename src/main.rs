@@ -9,7 +9,17 @@ use actix_web::{
 use deadpool_postgres::{Client, Pool};
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
+use std::cell::RefCell;
 use std::ops::DerefMut;
+
+thread_local! {
+   static SSR: RefCell<Ssr<'static, 'static>> = RefCell::new(
+       Ssr::from(
+           read_to_string("./dist/index.js").unwrap(),
+           "SSR"
+           ).unwrap()
+   )
+}
 
 mod embedded {
     use refinery::embed_migrations;
@@ -271,6 +281,18 @@ mod handlers {
     use deadpool_postgres::{Client, Pool};
     use std::env;
 
+    pub async fn get_graph_nodes(
+        db_pool: web::Data<Pool>,
+        path: web::Path<String>,
+    ) -> Result<HttpResponse, Error> {
+        let _page = path.into_inner().parse::<i32>().unwrap();
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+
+        let posts = db::get_posts(&client).await?;
+
+        Ok(HttpResponse::Ok().json(posts))
+    }
+
     pub async fn get_posts(
         db_pool: web::Data<Pool>,
         path: web::Path<String>,
@@ -375,6 +397,11 @@ mod handlers {
     }
 }
 
+async fn health_check() -> Result<HttpResponse, actix_web::Error> {
+    let status = serde_json::json!({ "status": "OK" });
+    Ok(HttpResponse::Ok().json(status))
+}
+
 async fn default_handler(req_method: Method) -> Result<impl Responder> {
     match req_method {
         Method::GET => {
@@ -409,7 +436,8 @@ use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
 
 use handlers::{
-    add_tracking_code, add_user, get_posts, get_tracking_code, get_tracking_codes, get_users,
+    add_tracking_code, add_user, get_graph_nodes, get_posts, get_tracking_code, get_tracking_codes,
+    get_users,
 };
 
 #[actix_web::get("get_session")]
@@ -426,24 +454,24 @@ async fn get_session(session: Session) -> impl actix_web::Responder {
 #[get("/")]
 async fn index(
     req: HttpRequest,
-    data: web::Data<AppState>,
     db_pool: web::Data<Pool>,
     config: web::Data<AppState>,
 ) -> Result<HttpResponse> {
     let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
     let mut _redis = config.redis.clone();
-
     let posts = db::get_posts(&client).await?;
-    let source = data.js_source.lock().unwrap();
 
     match posts.into_iter().nth(0) {
         Some(post) => {
             let post_props = &serde_json::to_string(&post).unwrap();
-
             println!("{post_props:?}");
 
-            let res_body = Ssr::render_to_string(&source, "SSR", Some(&post_props));
-            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+            let response_body = SSR.with(|ssr| {
+                ssr.borrow_mut()
+                    .render_to_string(Some(&post_props))
+                    .unwrap()
+            });
+            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
 
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
@@ -457,9 +485,9 @@ async fn index(
                 }}"##,
                 req.uri()
             );
-
-            let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
-            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+            let response_body =
+                SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(&props)).unwrap());
+            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
 
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
@@ -475,7 +503,6 @@ async fn favicon() -> Result<impl Responder> {
 }
 
 struct AppState {
-    js_source: Mutex<String>,
     redis: ConnectionManager,
 }
 
@@ -521,12 +548,8 @@ async fn main() -> std::io::Result<()> {
     let manager = ConnectionManager::new(client).await.unwrap();
     let backend = RedisBackend::builder(manager.clone()).build();
 
-    let data = web::Data::new(AppState {
-        redis: manager,
-        js_source: Mutex::new(
-            read_to_string("./dist/index.js").expect("Failed to load the resource."),
-        ),
-    });
+    let data = web::Data::new(AppState { redis: manager });
+    Ssr::create_platform();
 
     let server = HttpServer::new(move || {
         let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 70) // 70 requests in 60 seconds
@@ -550,11 +573,13 @@ async fn main() -> std::io::Result<()> {
             )
             .service(get_session)
             .service(web::resource("/posts.json").route(web::get().to(get_posts)))
+            .service(web::resource("/nodes.json").route(web::get().to(get_graph_nodes)))
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
             )
             .service(web::resource("/codes/{code}").route(web::get().to(get_tracking_code)))
+            .route("/health_check", web::get().to(health_check))
             .default_service(web::to(default_handler))
             .service(index)
     })
