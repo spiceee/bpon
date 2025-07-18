@@ -29,7 +29,7 @@ mod embedded {
 mod config {
     use serde::Deserialize;
     #[derive(Debug, Default, Deserialize)]
-    pub struct ExampleConfig {
+    pub struct AppConfig {
         pub server_addr: String,
         pub pg: deadpool_postgres::Config,
     }
@@ -435,7 +435,7 @@ async fn default_handler(req_method: Method) -> Result<impl Responder> {
 }
 
 use crate::{
-    config::ExampleConfig,
+    config::AppConfig,
     errors::MyError,
     models::{CodePayload, Post, TrackingCode, User},
 };
@@ -546,7 +546,7 @@ async fn main() -> std::io::Result<()> {
         .build()
         .unwrap();
 
-    let config: ExampleConfig = config_.try_deserialize().unwrap();
+    let config: AppConfig = config_.try_deserialize().unwrap();
     let pool = config.pg.create_pool(None, NoTls).unwrap();
 
     // Perform migrations
