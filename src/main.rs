@@ -9,6 +9,7 @@ use actix_web::{
 use deadpool_postgres::{Client, Pool};
 use futures::{future::ok, stream::once};
 use ssr_rs::Ssr;
+use std::cell::RefCell;
 use std::ops::DerefMut;
 
 mod embedded {
@@ -436,31 +437,39 @@ async fn get_session(session: Session) -> impl actix_web::Responder {
     }
 }
 
+thread_local! {
+   static SSR: RefCell<Ssr<'static, 'static>> = RefCell::new(
+       Ssr::from(
+           read_to_string("./dist/index.js").unwrap(),
+           "SSR"
+           ).unwrap()
+   )
+}
+
 #[get("/")]
 async fn index(
     req: HttpRequest,
-    data: web::Data<AppState>,
     db_pool: web::Data<Pool>,
     config: web::Data<AppState>,
 ) -> Result<HttpResponse> {
     let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
     let mut _redis = config.redis.clone();
-
     let posts = db::get_posts(&client).await?;
-    let source = data.js_source.lock().unwrap();
 
     match posts.into_iter().nth(0) {
         Some(post) => {
             let post_props = &serde_json::to_string(&post).unwrap();
+            let body = SSR.with(|ssr| {
+                ssr.borrow_mut()
+                    .render_to_string(Some(&post_props))
+                    .unwrap()
+            });
 
             println!("{post_props:?}");
 
-            let res_body = Ssr::render_to_string(&source, "SSR", Some(&post_props));
-            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
-
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
-                .streaming(body))
+                .body(body))
         }
         None => {
             let props = format!(
@@ -470,13 +479,11 @@ async fn index(
                 }}"##,
                 req.uri()
             );
-
-            let res_body = Ssr::render_to_string(&source, "SSR", Some(&props));
-            let body = once(ok::<_, Error>(web::Bytes::from(res_body)));
+            let body = SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(&props)).unwrap());
 
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
-                .streaming(body))
+                .body(body))
         }
     }
 }
@@ -488,7 +495,6 @@ async fn favicon() -> Result<impl Responder> {
 }
 
 struct AppState {
-    js_source: Mutex<String>,
     redis: ConnectionManager,
 }
 
@@ -534,12 +540,7 @@ async fn main() -> std::io::Result<()> {
     let manager = ConnectionManager::new(client).await.unwrap();
     let backend = RedisBackend::builder(manager.clone()).build();
 
-    let data = web::Data::new(AppState {
-        redis: manager,
-        js_source: Mutex::new(
-            read_to_string("./dist/index.js").expect("Failed to load the resource."),
-        ),
-    });
+    let data = web::Data::new(AppState { redis: manager });
 
     let server = HttpServer::new(move || {
         let input = SimpleInputFunctionBuilder::new(Duration::from_secs(60), 70) // 70 requests in 60 seconds
