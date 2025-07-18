@@ -2,9 +2,9 @@
 use actix_files::{Files, NamedFile};
 use actix_session::Session;
 use actix_web::{
-    get,
+    App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result, get,
     http::{Method, StatusCode},
-    web, App, Either, Error, HttpRequest, HttpResponse, HttpServer, Responder, Result,
+    web,
 };
 use deadpool_postgres::{Client, Pool};
 use futures::{future::ok, stream::once};
@@ -66,6 +66,16 @@ mod models {
         pub date_of_postage: Option<DateTime<Utc>>,
         pub value_in_real: Decimal,
         pub reimbursed: bool,
+        pub month: Option<DateTime<Utc>>,
+        pub occurrences: i32,
+    }
+
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
+    #[pg_mapper(table = "tracking_codes")]
+    pub struct TrackingCodeCount {
+        pub code: String,
+        pub month: Option<DateTime<Utc>>,
+        pub occurrences: i32,
     }
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
@@ -130,7 +140,7 @@ mod db {
 
     use crate::{
         errors::MyError,
-        models::{Post, TrackingCode, User},
+        models::{Post, TrackingCode, TrackingCodeCount, User},
     };
 
     pub async fn get_posts(client: &Client) -> Result<Vec<Post>, MyError> {
@@ -161,6 +171,24 @@ mod db {
             .iter()
             .map(|row| User::from_row_ref(row).unwrap())
             .collect::<Vec<User>>();
+
+        Ok(results)
+    }
+
+    pub async fn get_tracking_code_counts(
+        client: &Client,
+    ) -> Result<Vec<TrackingCodeCount>, MyError> {
+        let count_sql =
+            include_str!("../sql/get_tracking_code_count_grouped_by_last_12_months.sql");
+        let count_sql = count_sql.replace("$table_fields", &TrackingCodeCount::sql_table_fields());
+        let count_sql = client.prepare(&count_sql).await.unwrap();
+
+        let results = client
+            .query(&count_sql, &[])
+            .await?
+            .iter()
+            .map(|row| TrackingCodeCount::from_row_ref(row).unwrap())
+            .collect::<Vec<TrackingCodeCount>>();
 
         Ok(results)
     }
@@ -276,7 +304,7 @@ mod handlers {
         errors::MyError,
         models::{CodePayload, Post, TrackingCode, User},
     };
-    use actix_web::{web, Error, HttpRequest, HttpResponse};
+    use actix_web::{Error, HttpRequest, HttpResponse, web};
     use cf_turnstile::{SiteVerifyRequest, TurnstileClient};
     use deadpool_postgres::{Client, Pool};
     use std::env;
@@ -428,12 +456,12 @@ use std::time::Duration;
 use tokio_postgres::NoTls;
 
 use actix_extensible_rate_limit::{
-    backend::{redis::RedisBackend, SimpleInputFunctionBuilder},
     RateLimiter,
+    backend::{SimpleInputFunctionBuilder, redis::RedisBackend},
 };
 
-use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
+use redis::aio::ConnectionManager;
 
 use handlers::{
     add_tracking_code, add_user, get_graph_nodes, get_posts, get_tracking_code, get_tracking_codes,
