@@ -422,6 +422,14 @@ async fn health_check() -> Result<HttpResponse, actix_web::Error> {
     Ok(HttpResponse::Ok().json(status))
 }
 
+async fn favicon_ico() -> Result<impl Responder> {
+    Ok(NamedFile::open("./static/favicon.ico")?)
+}
+
+async fn favicon_png() -> Result<impl Responder> {
+    Ok(NamedFile::open("./static/favicon.png")?)
+}
+
 async fn default_handler(req_method: Method) -> Result<impl Responder> {
     match req_method {
         Method::GET => {
@@ -516,12 +524,6 @@ async fn index(
     }
 }
 
-/// favicon handler
-#[get("/favicon")]
-async fn favicon() -> Result<impl Responder> {
-    Ok(NamedFile::open("../static/favicon.ico")?)
-}
-
 struct AppState {
     redis: ConnectionManager,
 }
@@ -600,6 +602,8 @@ async fn main() -> std::io::Result<()> {
             )
             .service(web::resource("/codes/{code}").route(web::get().to(get_tracking_code)))
             .route("/health_check", web::get().to(health_check))
+            .route("/favicon.ico", web::get().to(favicon_ico))
+            .route("/favicon.png", web::get().to(favicon_png))
             .default_service(web::to(default_handler))
             .service(index)
     })
