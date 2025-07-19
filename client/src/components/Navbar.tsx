@@ -4,9 +4,7 @@ import { Link } from 'react-router-dom';
 const Navbar: React.FC = () => {
     return (
         <nav>
-            <ul>
-                <li>Importação Não Autorizada</li>
-            </ul>
+            <h1>Importação Não Autorizada</h1>
         </nav>
     );
 };
