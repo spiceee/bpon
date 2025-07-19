@@ -22,6 +22,10 @@ const Footer: React.FC = () => {
                 <Link link="https://twitter.com/ImpNaoAutoriza">
                     @ImpNaoAutoriza
                 </Link>{' '}
+                . Bluesky:{' '}
+                <Link link="https://bsky.app/profile/importacaonaoautorizada.com">
+                    @importacaonaoautorizada.com
+                </Link>{' '}
                 <span>
                     Este site não é filiado aos Correios ou Receita Federal.
                 </span>

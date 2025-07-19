@@ -21,7 +21,6 @@ export const Index = (params: string | undefined): string => {
        name="description"
        content="O que está acontecendo com as encomendas que tentam entrar no Brasil? Por que nossas importações estão sendo não autorizadas? Queremos descobrir com a sua ajuda!"
    />
-   <meta property="og:image" content={og} />
    <meta property="og:image:width" content="703" />
    <meta property="og:image:height" content="369" />
    <meta property="og:title" content="Importação Não Autorizada" />
