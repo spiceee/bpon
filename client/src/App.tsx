@@ -3,7 +3,6 @@ import { Switch, Route } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
 import './styles/index.scss';
-import favicon from '../public/favicon.png';
 import og from '../public/og.png';
 
 import Navbar from './components/Navbar';
@@ -36,7 +35,8 @@ const App: React.FC = () => {
                 />
                 <meta property="og:type" content="Website" />
                 <title>Importação Não Autorizada</title>
-                <link rel="icon" type="image/png" href={favicon} />
+                <link rel="icon" type="image/png" href="./favicon.png" />
+                <link rel="icon" type="image/ico" href="./favicon.ico" />
             </Helmet>
             <Navbar />
             <Switch>
