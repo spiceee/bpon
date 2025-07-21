@@ -34,10 +34,7 @@ const MoneyBadge: React.FC<{ amount?: string | null }> = ({
     }, [amount]);
 
     return (
-        <div
-            className="price-badge"
-            title="Total de despesas não reembolsadas nos últimos 12 meses"
-        >
+        <div className="price-badge" title="Total de despesas não reembolsadas">
             {total} perdidos 💸
         </div>
     );
