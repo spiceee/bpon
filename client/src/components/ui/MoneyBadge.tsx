@@ -33,11 +33,11 @@ const MoneyBadge: React.FC<{ amount?: string | null }> = ({
         fetchData();
     }, [amount]);
 
-    return (
+    return total && total?.length > 0 ? (
         <div className="price-badge" title="Total de despesas não reembolsadas">
             {total} perdidos 💸
         </div>
-    );
+    ) : null;
 };
 
 export default MoneyBadge;
