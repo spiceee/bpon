@@ -71,7 +71,7 @@ const LineChartGraph: React.FC = () => {
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">
                     Ocorrências reportadas
                 </h1>
-                <p className="text-slate-600">Últimos 12 meses</p>
+                <p>Últimos 12 meses</p>
             </div>
 
             <div className="relative bg-white rounded-xl shadow-lg p-6">
