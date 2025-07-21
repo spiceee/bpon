@@ -15,10 +15,10 @@ const Footer: React.FC = () => {
                     width="32"
                 />{' '}
                 <Link link="https://www.rust-lang.org/">Rust</Link>. Contato:{' '}
-                <Link link="mailto:ouvidoria@importacaonaoautorizada.com">
+                {/* <Link link="mailto:ouvidoria@importacaonaoautorizada.com">
                     ouvidoria at importacaonaoautorizada.com
-                </Link>
-                . Twitter:{' '}
+                </Link> */}
+                Twitter:{' '}
                 <Link link="https://twitter.com/ImpNaoAutoriza">
                     @ImpNaoAutoriza
                 </Link>{' '}
