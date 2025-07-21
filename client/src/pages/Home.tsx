@@ -1,15 +1,15 @@
 import React from 'react';
 import Form from '../components/Form';
 import LineChartGraph from '../components/ui/LineChartGraph';
+import MoneyBadge from '../components/ui/MoneyBadge';
 
 const Home: React.FC = () => {
     return (
-        <>
-            <div className="wrapper envelope">
-                <Form />
-                <LineChartGraph />
-            </div>
-        </>
+        <main>
+            <Form />
+            <LineChartGraph />
+            <MoneyBadge />
+        </main>
     );
 };
 
