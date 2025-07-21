@@ -1,21 +1,23 @@
 import React, { MouseEventHandler } from 'react';
 
 type Props = {
-	onClick: MouseEventHandler;
+    onClick: MouseEventHandler;
 };
 
 const Success: React.FunctionComponent<Props> = ({
-	onClick,
+    onClick,
 }: {
-	onClick: MouseEventHandler;
+    onClick: MouseEventHandler;
 }) => {
-	return (
-		<div className="success">
-			<h2>Informação gravada com sucesso!</h2>
+    return (
+        <div className="success">
+            <h1>Informação gravada com sucesso!</h1>
 
-			<button onClick={onClick}>Insira outro código</button>
-		</div>
-	);
+            <button className="button" onClick={onClick}>
+                Insira outro código
+            </button>
+        </div>
+    );
 };
 
 export default Success;
