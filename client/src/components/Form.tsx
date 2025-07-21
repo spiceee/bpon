@@ -153,6 +153,16 @@ const Form: React.FC = () => {
             />
 
             <div className="summary">
+                <div className="header">
+                    <img
+                        src="/favicon.png"
+                        width="80"
+                        height="auto"
+                        alt="Logo"
+                    />
+                    <h1>Importação Não Autorizada</h1>
+                </div>
+
                 <p>
                     O que está acontecendo com as encomendas que tentam entrar
                     no Brasil?
@@ -220,7 +230,7 @@ const Form: React.FC = () => {
             ) : (
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="fields">
-                        <h1>Contribua com informação sobre sua encomenda:</h1>
+                        <h2>Contribua com informação sobre sua encomenda:</h2>
 
                         <div className="inputWrapper">
                             <label htmlFor="code">Código de rastreio*</label>

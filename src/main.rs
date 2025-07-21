@@ -76,6 +76,12 @@ mod models {
     }
 
     #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
+    #[pg_mapper(table = "tracking_codes")]
+    pub struct TotalValueNotReimbursed {
+        pub total_value_not_reimbursed: Decimal,
+    }
+
+    #[derive(Deserialize, PostgresMapper, Serialize, Clone, Debug)]
     #[pg_mapper(table = "users")] // singular 'user' is a keyword
     pub struct User {
         pub id: i32,
@@ -137,7 +143,7 @@ mod db {
 
     use crate::{
         errors::MyError,
-        models::{Post, TrackingCode, TrackingCodeCount, User},
+        models::{Post, TotalValueNotReimbursed, TrackingCode, TrackingCodeCount, User},
     };
 
     pub async fn get_posts(client: &Client) -> Result<Vec<Post>, MyError> {
@@ -186,6 +192,26 @@ mod db {
             .iter()
             .map(|row| TrackingCodeCount::from_row_ref(row).unwrap())
             .collect::<Vec<TrackingCodeCount>>();
+
+        Ok(results)
+    }
+
+    pub async fn get_total_value_not_reimbursed(
+        client: &Client,
+    ) -> Result<Vec<TotalValueNotReimbursed>, MyError> {
+        let count_sql = include_str!("../sql/get_total_amount_lost_in_the_last_12_months.sql");
+        let count_sql = count_sql.replace(
+            "$table_fields",
+            &TotalValueNotReimbursed::sql_table_fields(),
+        );
+        let count_sql = client.prepare(&count_sql).await.unwrap();
+
+        let results = client
+            .query(&count_sql, &[])
+            .await?
+            .iter()
+            .map(|row| TotalValueNotReimbursed::from_row_ref(row).unwrap())
+            .collect::<Vec<TotalValueNotReimbursed>>();
 
         Ok(results)
     }
@@ -311,6 +337,15 @@ mod handlers {
         let tracking_code_counts = db::get_tracking_code_counts(&client).await?;
 
         Ok(HttpResponse::Ok().json(tracking_code_counts))
+    }
+
+    pub async fn get_not_reimbursed_amount(
+        db_pool: web::Data<Pool>,
+    ) -> Result<HttpResponse, Error> {
+        let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
+        let total_value = db::get_total_value_not_reimbursed(&client).await?;
+
+        Ok(HttpResponse::Ok().json(total_value))
     }
 
     pub async fn get_posts(
@@ -464,8 +499,8 @@ use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 
 use handlers::{
-    add_tracking_code, add_user, get_graph_nodes, get_posts, get_tracking_code, get_tracking_codes,
-    get_users,
+    add_tracking_code, add_user, get_graph_nodes, get_not_reimbursed_amount, get_posts,
+    get_tracking_code, get_tracking_codes, get_users,
 };
 
 #[actix_web::get("get_session")]
@@ -596,6 +631,10 @@ async fn main() -> std::io::Result<()> {
             .service(get_session)
             .service(web::resource("/posts.json").route(web::get().to(get_posts)))
             .service(web::resource("/nodes.json").route(web::get().to(get_graph_nodes)))
+            .service(
+                web::resource("/not_reimbursed_amount.json")
+                    .route(web::get().to(get_not_reimbursed_amount)),
+            )
             .service(web::resource("/codes").route(web::post().to(add_tracking_code)))
             .service(
                 web::resource("/users/{user_id}/codes").route(web::get().to(get_tracking_codes)),
