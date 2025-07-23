@@ -28,3 +28,4 @@ coverage
 client/node_modules
 dist
 dist/*
+*report.html

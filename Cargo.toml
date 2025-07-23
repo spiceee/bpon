@@ -28,7 +28,6 @@ actix-rt = "2.2.0"
 actix-service = "2.0.0"
 actix-extensible-rate-limit = { version = "0.3.1", features = ["redis"] }
 
-rusty_v8 = "0.32.1"
 ssr_rs = "0.8.3"
 deadpool-postgres = { version = "0.12", features = ["serde"] }
 serde = { version = "1.0.137", features = ["derive"] }
