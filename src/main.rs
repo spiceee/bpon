@@ -596,14 +596,14 @@ async fn main() -> std::io::Result<()> {
 
     // Perform migrations
     let mut conn = pool.get().await.unwrap();
-    let client = conn.deref_mut();
+    let client = &mut *conn;
 
     let port = env::var("PORT").expect("Missing port number");
     let port = port.parse::<u16>().expect("Invalid port given");
     let redis_url = env::var("REDIS_PRIVATE_URL").expect("Missing Redis URL");
 
     let migration_report = embedded::migrations::runner()
-        .run_async(client.deref_mut())
+        .run_async(&mut **client)
         .await
         .unwrap();
 
