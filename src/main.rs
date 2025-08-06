@@ -1,4 +1,8 @@
 #![allow(unused_imports, non_snake_case)] // refinery uses __ in migration filenames
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+
 use actix_files::{Files, NamedFile};
 use actix_session::Session;
 use actix_web::{
@@ -127,8 +131,8 @@ mod errors {
     impl ResponseError for MyError {
         fn error_response(&self) -> HttpResponse {
             match *self {
-                MyError::NotFound => HttpResponse::NotFound().finish(),
-                MyError::PoolError(ref err) => {
+                Self::NotFound => HttpResponse::NotFound().finish(),
+                Self::PoolError(ref err) => {
                     HttpResponse::InternalServerError().body(err.to_string())
                 }
                 _ => HttpResponse::InternalServerError().finish(),
@@ -217,9 +221,9 @@ mod db {
     }
 
     pub async fn add_user(client: &Client, user_info: User) -> Result<User, MyError> {
-        let _stmt = include_str!("../sql/add_user.sql");
-        let _stmt = _stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = client.prepare(&_stmt).await.unwrap();
+        let stmt = include_str!("../sql/add_user.sql");
+        let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
+        let stmt = client.prepare(&stmt).await.unwrap();
 
         client
             .query(
@@ -244,11 +248,11 @@ mod db {
         client: &Client,
         code_info: TrackingCode,
     ) -> Result<TrackingCode, MyError> {
-        let _stmt = include_str!("../sql/add_tracking_code.sql");
-        let _stmt = _stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
+        let stmt = include_str!("../sql/add_tracking_code.sql");
+        let stmt = stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
 
-        println!("{_stmt:?}");
-        let stmt = client.prepare(&_stmt).await.unwrap();
+        println!("{stmt:?}");
+        let stmt = client.prepare(&stmt).await.unwrap();
         println!("{code_info:?}");
 
         let query = client
@@ -283,11 +287,11 @@ mod db {
         client: &Client,
         user_id: i32,
     ) -> Result<Vec<TrackingCode>, MyError> {
-        let _code_sql = include_str!("../sql/get_tracking_codes_by_user.sql");
-        let _code_sql = _code_sql
+        let code_sql = include_str!("../sql/get_tracking_codes_by_user.sql");
+        let code_sql = code_sql
             .replace("$table_fields", &TrackingCode::sql_table_fields())
             .replace("$user_id", &user_id.to_string());
-        let code_sql = client.prepare(&_code_sql).await.unwrap();
+        let code_sql = client.prepare(&code_sql).await.unwrap();
 
         let results = client
             .query(&code_sql, &[])
@@ -303,12 +307,12 @@ mod db {
         client: &Client,
         code: String,
     ) -> Result<Vec<TrackingCode>, MyError> {
-        let _code_sql = include_str!("../sql/find_code.sql");
+        let code_sql = include_str!("../sql/find_code.sql");
 
-        let _code_sql = _code_sql
+        let code_sql = code_sql
             .replace("$table_fields", &TrackingCode::sql_table_fields())
             .replace("$code", &code.to_string());
-        let code_sql = client.prepare(&_code_sql).await.unwrap();
+        let code_sql = client.prepare(&code_sql).await.unwrap();
 
         let results = client
             .query(&code_sql, &[])
@@ -404,6 +408,9 @@ mod handlers {
         Ok(HttpResponse::Ok().json(new_user))
     }
 
+    // Disable clippy::future_not_send warning
+    // actix-web handlers are not Send because they run as a tokio single-threaded async runtime
+    #[allow(clippy::future_not_send)]
     pub async fn add_tracking_code(
         payload: web::Json<CodePayload>,
         db_pool: web::Data<Pool>,
@@ -503,6 +510,9 @@ use handlers::{
     get_tracking_code, get_tracking_codes, get_users,
 };
 
+// Disable clippy::future_not_send warning
+// actix-web handlers are not Send because they run as a tokio single-threaded async runtime
+#[allow(clippy::future_not_send)]
 #[actix_web::get("get_session")]
 async fn get_session(session: Session) -> impl actix_web::Responder {
     match session.get::<String>("message") {
@@ -514,6 +524,9 @@ async fn get_session(session: Session) -> impl actix_web::Responder {
     }
 }
 
+// Disable clippy::future_not_send warning
+// actix-web handlers are not Send because they run as a tokio single-threaded async runtime
+#[allow(clippy::future_not_send)]
 #[get("/")]
 async fn index(
     req: HttpRequest,
@@ -539,10 +552,10 @@ async fn index(
         }
         None => {
             let props = format!(
-                r##"{{
+                r#"{{
                     "location": "{}",
                     "context": {{}}
-                }}"##,
+                }}"#,
                 req.uri()
             );
             let response_body =
