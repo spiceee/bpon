@@ -424,7 +424,7 @@ mod handlers {
         let captcha_secret = env::var("PRIVATE_CATPCHA_SECRET").expect("Missing secret");
 
         println!("{captcha_secret}");
-        println!("{}", remote_ip);
+        println!("{remote_ip}");
 
         let client = TurnstileClient::new(captcha_secret.to_string().into());
         let verify_req = SiteVerifyRequest {
@@ -433,7 +433,7 @@ mod handlers {
             secret: captcha_secret.to_string().into(),
         };
 
-        println!("{:?}", verify_req);
+        println!("{verify_req:?}");
 
         let validated = client.siteverify(verify_req).await;
 
@@ -524,16 +524,13 @@ async fn index(
     let mut _redis = config.redis.clone();
     let posts = db::get_posts(&client).await?;
 
-    match posts.into_iter().nth(0) {
+    match posts.into_iter().next() {
         Some(post) => {
             let post_props = &serde_json::to_string(&post).unwrap();
             println!("{post_props:?}");
 
-            let response_body = SSR.with(|ssr| {
-                ssr.borrow_mut()
-                    .render_to_string(Some(&post_props))
-                    .unwrap()
-            });
+            let response_body =
+                SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(post_props)).unwrap());
             let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
 
             Ok(HttpResponse::build(StatusCode::OK)
@@ -599,7 +596,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .unwrap();
 
-    println!("migration_report {:#?}", migration_report);
+    println!("migration_report {migration_report:#?}");
 
     let client = redis::Client::open(redis_url).unwrap();
     let manager = ConnectionManager::new(client).await.unwrap();
