@@ -443,18 +443,14 @@ mod handlers {
         println!("{verify_req:?}");
 
         let validated = client.siteverify(verify_req).await;
+        if validated.is_ok() {
+            let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
-        match validated {
-            Ok(_) => {
-                let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
-
-                let new_code = db::add_tracking_code(&client, code_info).await?;
-                Ok(HttpResponse::Ok().json(new_code))
-            }
-            Err(_) => {
-                println!("{validated:?}");
-                Ok(HttpResponse::Forbidden().finish())
-            }
+            let new_code = db::add_tracking_code(&client, code_info).await?;
+            Ok(HttpResponse::Ok().json(new_code))
+        } else {
+            println!("{validated:?}");
+            Ok(HttpResponse::Forbidden().finish())
         }
     }
 }
@@ -515,13 +511,15 @@ use handlers::{
 #[allow(clippy::future_not_send)]
 #[actix_web::get("get_session")]
 async fn get_session(session: Session) -> impl actix_web::Responder {
-    match session.get::<String>("message") {
-        Ok(message_option) => match message_option {
-            Some(message) => HttpResponse::Ok().body(message),
-            None => HttpResponse::NotFound().body("Not set."),
+    session.get::<String>("message").map_or_else(
+        |_| HttpResponse::InternalServerError().body("Session error."),
+        |message_option| {
+            message_option.map_or_else(
+                || HttpResponse::NotFound().body("Not set."),
+                |message| HttpResponse::Ok().body(message),
+            )
         },
-        Err(_) => HttpResponse::InternalServerError().body("Session error."),
-    }
+    )
 }
 
 // Disable clippy::future_not_send warning
@@ -537,20 +535,8 @@ async fn index(
     let mut _redis = config.redis.clone();
     let posts = db::get_posts(&client).await?;
 
-    match posts.into_iter().next() {
-        Some(post) => {
-            let post_props = &serde_json::to_string(&post).unwrap();
-            println!("{post_props:?}");
-
-            let response_body =
-                SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(post_props)).unwrap());
-            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
-
-            Ok(HttpResponse::build(StatusCode::OK)
-                .content_type("text/html; charset=utf-8")
-                .streaming(body))
-        }
-        None => {
+    posts.into_iter().next().map_or_else(
+        || {
             let props = format!(
                 r#"{{
                     "location": "{}",
@@ -565,8 +551,20 @@ async fn index(
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
                 .streaming(body))
-        }
-    }
+        },
+        |post| {
+            let post_props = &serde_json::to_string(&post).unwrap();
+            println!("{post_props:?}");
+
+            let response_body =
+                SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(post_props)).unwrap());
+            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
+
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/html; charset=utf-8")
+                .streaming(body))
+        },
+    )
 }
 
 struct AppState {
