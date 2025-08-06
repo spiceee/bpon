@@ -1,4 +1,8 @@
 #![allow(unused_imports, non_snake_case)] // refinery uses __ in migration filenames
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+
 use actix_files::{Files, NamedFile};
 use actix_session::Session;
 use actix_web::{
@@ -127,8 +131,8 @@ mod errors {
     impl ResponseError for MyError {
         fn error_response(&self) -> HttpResponse {
             match *self {
-                MyError::NotFound => HttpResponse::NotFound().finish(),
-                MyError::PoolError(ref err) => {
+                Self::NotFound => HttpResponse::NotFound().finish(),
+                Self::PoolError(ref err) => {
                     HttpResponse::InternalServerError().body(err.to_string())
                 }
                 _ => HttpResponse::InternalServerError().finish(),
@@ -217,9 +221,9 @@ mod db {
     }
 
     pub async fn add_user(client: &Client, user_info: User) -> Result<User, MyError> {
-        let _stmt = include_str!("../sql/add_user.sql");
-        let _stmt = _stmt.replace("$table_fields", &User::sql_table_fields());
-        let stmt = client.prepare(&_stmt).await.unwrap();
+        let stmt = include_str!("../sql/add_user.sql");
+        let stmt = stmt.replace("$table_fields", &User::sql_table_fields());
+        let stmt = client.prepare(&stmt).await.unwrap();
 
         client
             .query(
@@ -244,11 +248,11 @@ mod db {
         client: &Client,
         code_info: TrackingCode,
     ) -> Result<TrackingCode, MyError> {
-        let _stmt = include_str!("../sql/add_tracking_code.sql");
-        let _stmt = _stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
+        let stmt = include_str!("../sql/add_tracking_code.sql");
+        let stmt = stmt.replace("$table_fields", &TrackingCode::sql_table_fields());
 
-        println!("{_stmt:?}");
-        let stmt = client.prepare(&_stmt).await.unwrap();
+        println!("{stmt:?}");
+        let stmt = client.prepare(&stmt).await.unwrap();
         println!("{code_info:?}");
 
         let query = client
@@ -283,11 +287,11 @@ mod db {
         client: &Client,
         user_id: i32,
     ) -> Result<Vec<TrackingCode>, MyError> {
-        let _code_sql = include_str!("../sql/get_tracking_codes_by_user.sql");
-        let _code_sql = _code_sql
+        let code_sql = include_str!("../sql/get_tracking_codes_by_user.sql");
+        let code_sql = code_sql
             .replace("$table_fields", &TrackingCode::sql_table_fields())
             .replace("$user_id", &user_id.to_string());
-        let code_sql = client.prepare(&_code_sql).await.unwrap();
+        let code_sql = client.prepare(&code_sql).await.unwrap();
 
         let results = client
             .query(&code_sql, &[])
@@ -303,12 +307,12 @@ mod db {
         client: &Client,
         code: String,
     ) -> Result<Vec<TrackingCode>, MyError> {
-        let _code_sql = include_str!("../sql/find_code.sql");
+        let code_sql = include_str!("../sql/find_code.sql");
 
-        let _code_sql = _code_sql
+        let code_sql = code_sql
             .replace("$table_fields", &TrackingCode::sql_table_fields())
             .replace("$code", &code.to_string());
-        let code_sql = client.prepare(&_code_sql).await.unwrap();
+        let code_sql = client.prepare(&code_sql).await.unwrap();
 
         let results = client
             .query(&code_sql, &[])
@@ -404,6 +408,9 @@ mod handlers {
         Ok(HttpResponse::Ok().json(new_user))
     }
 
+    // Disable clippy::future_not_send warning
+    // actix-web handlers are not Send because they run as a tokio single-threaded async runtime
+    #[allow(clippy::future_not_send)]
     pub async fn add_tracking_code(
         payload: web::Json<CodePayload>,
         db_pool: web::Data<Pool>,
@@ -424,7 +431,7 @@ mod handlers {
         let captcha_secret = env::var("PRIVATE_CATPCHA_SECRET").expect("Missing secret");
 
         println!("{captcha_secret}");
-        println!("{}", remote_ip);
+        println!("{remote_ip}");
 
         let client = TurnstileClient::new(captcha_secret.to_string().into());
         let verify_req = SiteVerifyRequest {
@@ -433,21 +440,17 @@ mod handlers {
             secret: captcha_secret.to_string().into(),
         };
 
-        println!("{:?}", verify_req);
+        println!("{verify_req:?}");
 
         let validated = client.siteverify(verify_req).await;
+        if validated.is_ok() {
+            let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
 
-        match validated {
-            Ok(_) => {
-                let client: Client = db_pool.get().await.map_err(MyError::PoolError)?;
-
-                let new_code = db::add_tracking_code(&client, code_info).await?;
-                Ok(HttpResponse::Ok().json(new_code))
-            }
-            Err(_) => {
-                println!("{validated:?}");
-                Ok(HttpResponse::Forbidden().finish())
-            }
+            let new_code = db::add_tracking_code(&client, code_info).await?;
+            Ok(HttpResponse::Ok().json(new_code))
+        } else {
+            println!("{validated:?}");
+            Ok(HttpResponse::Forbidden().finish())
         }
     }
 }
@@ -503,17 +506,25 @@ use handlers::{
     get_tracking_code, get_tracking_codes, get_users,
 };
 
+// Disable clippy::future_not_send warning
+// actix-web handlers are not Send because they run as a tokio single-threaded async runtime
+#[allow(clippy::future_not_send)]
 #[actix_web::get("get_session")]
 async fn get_session(session: Session) -> impl actix_web::Responder {
-    match session.get::<String>("message") {
-        Ok(message_option) => match message_option {
-            Some(message) => HttpResponse::Ok().body(message),
-            None => HttpResponse::NotFound().body("Not set."),
+    session.get::<String>("message").map_or_else(
+        |_| HttpResponse::InternalServerError().body("Session error."),
+        |message_option| {
+            message_option.map_or_else(
+                || HttpResponse::NotFound().body("Not set."),
+                |message| HttpResponse::Ok().body(message),
+            )
         },
-        Err(_) => HttpResponse::InternalServerError().body("Session error."),
-    }
+    )
 }
 
+// Disable clippy::future_not_send warning
+// actix-web handlers are not Send because they run as a tokio single-threaded async runtime
+#[allow(clippy::future_not_send)]
 #[get("/")]
 async fn index(
     req: HttpRequest,
@@ -524,28 +535,13 @@ async fn index(
     let mut _redis = config.redis.clone();
     let posts = db::get_posts(&client).await?;
 
-    match posts.into_iter().nth(0) {
-        Some(post) => {
-            let post_props = &serde_json::to_string(&post).unwrap();
-            println!("{post_props:?}");
-
-            let response_body = SSR.with(|ssr| {
-                ssr.borrow_mut()
-                    .render_to_string(Some(&post_props))
-                    .unwrap()
-            });
-            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
-
-            Ok(HttpResponse::build(StatusCode::OK)
-                .content_type("text/html; charset=utf-8")
-                .streaming(body))
-        }
-        None => {
+    posts.into_iter().next().map_or_else(
+        || {
             let props = format!(
-                r##"{{
+                r#"{{
                     "location": "{}",
                     "context": {{}}
-                }}"##,
+                }}"#,
                 req.uri()
             );
             let response_body =
@@ -555,8 +551,20 @@ async fn index(
             Ok(HttpResponse::build(StatusCode::OK)
                 .content_type("text/html; charset=utf-8")
                 .streaming(body))
-        }
-    }
+        },
+        |post| {
+            let post_props = &serde_json::to_string(&post).unwrap();
+            println!("{post_props:?}");
+
+            let response_body =
+                SSR.with(|ssr| ssr.borrow_mut().render_to_string(Some(post_props)).unwrap());
+            let body = once(ok::<_, Error>(web::Bytes::from(response_body)));
+
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/html; charset=utf-8")
+                .streaming(body))
+        },
+    )
 }
 
 struct AppState {
@@ -588,18 +596,18 @@ async fn main() -> std::io::Result<()> {
 
     // Perform migrations
     let mut conn = pool.get().await.unwrap();
-    let client = conn.deref_mut();
+    let client = &mut *conn;
 
     let port = env::var("PORT").expect("Missing port number");
     let port = port.parse::<u16>().expect("Invalid port given");
     let redis_url = env::var("REDIS_PRIVATE_URL").expect("Missing Redis URL");
 
     let migration_report = embedded::migrations::runner()
-        .run_async(client.deref_mut())
+        .run_async(&mut **client)
         .await
         .unwrap();
 
-    println!("migration_report {:#?}", migration_report);
+    println!("migration_report {migration_report:#?}");
 
     let client = redis::Client::open(redis_url).unwrap();
     let manager = ConnectionManager::new(client).await.unwrap();
