@@ -1,5 +1,7 @@
 # Brazilian Post Office Nightmares
 
+This is the sourcecode for https://importacaonaoautorizada.com/
+
 Run docker to start the db and the redis instance:
 
 ```
@@ -14,7 +16,7 @@ BPON uses refinery and will automatically update the database schema.
 cargo run
 ```
 
-BPON is also a ReactJS application.
+BPON is also a ReactJS-based SSR application.
 
 ```
 cd client && npm i
