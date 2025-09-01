@@ -20,4 +20,18 @@ describe('Home', () => {
 
         expect(getByRole('button', { name: 'Envie' })).toBeTruthy();
     });
+
+    it('renders a graph', () => {
+        const { getByRole } = render(<Home />);
+
+        expect(
+            getByRole('heading', { name: 'Ocorrências reportadas' })
+        ).toBeTruthy();
+    });
+
+    it('renders a total', () => {
+        const { getByTitle } = render(<Home moneyBadgeAmount="1000" />);
+
+        expect(getByTitle('Total de despesas não reembolsadas')).toBeTruthy();
+    });
 });

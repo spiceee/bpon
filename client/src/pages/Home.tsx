@@ -3,12 +3,14 @@ import Form from '../components/Form';
 import LineChartGraph from '../components/ui/LineChartGraph';
 import MoneyBadge from '../components/ui/MoneyBadge';
 
-const Home: React.FC = () => {
+const Home: React.FC<{ moneyBadgeAmount?: string | null }> = ({
+    moneyBadgeAmount = null,
+}) => {
     return (
         <main>
             <Form />
             <LineChartGraph />
-            <MoneyBadge />
+            <MoneyBadge amount={moneyBadgeAmount} />
         </main>
     );
 };
