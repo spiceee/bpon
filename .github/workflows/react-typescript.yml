@@ -1,0 +1,20 @@
+name: React/TypeScript
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cd client && npm run build
+      - name: Run tests
+        run: cd client && npm run test
