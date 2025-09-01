@@ -240,6 +240,7 @@ const Form: React.FC = () => {
                                     pattern: /([0-9A-Za-z]){13}/,
                                 })}
                                 id="code"
+                                data-testid="code"
                                 type="text"
                                 placeholder="NC123445965BR"
                                 maxLength={13}
@@ -271,6 +272,7 @@ const Form: React.FC = () => {
                                     required: false,
                                 })}
                                 id="reason"
+                                data-testid="reason"
                             >
                                 {REASONS.map(reason => (
                                     <option
@@ -315,6 +317,7 @@ const Form: React.FC = () => {
                                 })}
                                 defaultValue={DEFAULT}
                                 id="country_of_origin"
+                                data-testid="country_of_origin"
                                 className="countrySelect"
                             >
                                 {COUNTRIES.map(country => (
@@ -344,6 +347,7 @@ const Form: React.FC = () => {
                                         {...register('dopDay')}
                                         defaultValue={DEFAULT}
                                         id="dopDay"
+                                        data-testid="dopDay"
                                     >
                                         <option value={DEFAULT} disabled hidden>
                                             DD
@@ -361,6 +365,7 @@ const Form: React.FC = () => {
                                     <select
                                         {...register('dopMon')}
                                         defaultValue={DEFAULT}
+                                        data-testid="dopMon"
                                     >
                                         <option value={DEFAULT} disabled hidden>
                                             MM
@@ -378,6 +383,7 @@ const Form: React.FC = () => {
                                     <select
                                         {...register('dopYear')}
                                         defaultValue={DEFAULT}
+                                        data-testid="dopYear"
                                     >
                                         <option value={DEFAULT} disabled hidden>
                                             AAAA
@@ -400,6 +406,7 @@ const Form: React.FC = () => {
                             </label>
                             <input
                                 id="reimbursed"
+                                data-testid="reimbursed"
                                 {...register('reimbursed', {
                                     required: false,
                                 })}
@@ -415,6 +422,7 @@ const Form: React.FC = () => {
                         <div className="inputWrapper">
                             <input
                                 id="data_use_consent"
+                                data-testid="data_use_consent"
                                 {...register('data_use_consent', {
                                     required:
                                         'Você precisa estar de acordos com nossos termos',
