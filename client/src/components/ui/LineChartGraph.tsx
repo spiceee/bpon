@@ -11,8 +11,34 @@ type GraphPointType = { month: string; nodeInputs: number };
 type GraphDataType = GraphPointType[];
 type GraphNodeType = { month: string; occurrences: number };
 
+const width = 800;
+const height = 400;
+const margin = { top: 20, right: 30, bottom: 60, left: 80 };
+const innerWidth = width - margin.left - margin.right;
+const innerHeight = height - margin.top - margin.bottom;
+
 const LineChartGraph: React.FC = () => {
     const [graphData, setGraphData] = React.useState<GraphDataType>([]);
+
+    // Ensure we have valid data
+    const validData = graphData.filter(
+        d => d && d.month && typeof d.nodeInputs === 'number'
+    );
+
+    // Scales using Visx with proper domain validation
+    const monthScale = scalePoint<string>({
+        range: [0, innerWidth],
+        domain: validData.map(d => d.month),
+        padding: 0.1,
+    });
+
+    const maxNodeInputs = Math.max(...validData.map(d => d.nodeInputs));
+
+    const nodeInputsScale = scaleLinear<number>({
+        range: [innerHeight, 0],
+        domain: [0, maxNodeInputs * 1.1],
+        nice: true,
+    });
 
     React.useEffect(() => {
         const fetchData = async () => {
@@ -39,31 +65,6 @@ const LineChartGraph: React.FC = () => {
         };
         fetchData();
     }, []);
-
-    const width = 800;
-    const height = 400;
-    const margin = { top: 20, right: 30, bottom: 60, left: 80 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    // Ensure we have valid data
-    const validData = graphData.filter(
-        d => d && d.month && typeof d.nodeInputs === 'number'
-    );
-
-    // Scales using Visx with proper domain validation
-    const monthScale = scalePoint<string>({
-        range: [0, innerWidth],
-        domain: validData.map(d => d.month),
-        padding: 0.1,
-    });
-
-    const maxNodeInputs = Math.max(...validData.map(d => d.nodeInputs));
-    const nodeInputsScale = scaleLinear<number>({
-        range: [innerHeight, 0],
-        domain: [0, maxNodeInputs * 1.1],
-        nice: true,
-    });
 
     return (
         <div className="lineChartGraph">
