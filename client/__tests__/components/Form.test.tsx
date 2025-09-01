@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { render, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect } from '@jest/globals';
 import '@testing-library/jest-dom';
 
@@ -11,6 +11,85 @@ describe('Form', () => {
         const { getByRole } = render(<Form />);
 
         expect(getByRole('button', { name: 'Envie' })).toBeTruthy();
+    });
+
+    describe('With required fields', () => {
+        it('renders a warning if tracking code is missing', async () => {
+            const { getByTestId, getByRole, getByText } = render(<Form />);
+            const codeInput = getByTestId('code');
+            const button = getByRole('button', { name: 'Envie' });
+
+            await act(async () => {
+                fireEvent.focus(codeInput, {
+                    target: { value: '' },
+                });
+                fireEvent.click(button);
+            });
+
+            await waitFor(() => {
+                expect(getByText('Digite um código válido.')).toBeTruthy();
+            });
+        });
+
+        it('renders a warning if data_use_consent is not checked', async () => {
+            const { getByRole, getByText } = render(<Form />);
+            const button = getByRole('button', { name: 'Envie' });
+
+            await act(async () => {
+                fireEvent.click(button);
+            });
+
+            await waitFor(() => {
+                expect(
+                    getByText('Você precisa estar de acordo com nossos termos')
+                ).toBeTruthy();
+            });
+        });
+
+        it('should not render a warning if data_use_consent is checked', async () => {
+            const { getByRole, queryAllByText, getByTestId } = render(<Form />);
+            const button = getByRole('button', { name: 'Envie' });
+            const dataUseConsentInput = getByTestId('data_use_consent');
+
+            await act(async () => {
+                fireEvent.click(dataUseConsentInput);
+                fireEvent.click(button);
+            });
+
+            await waitFor(() => {
+                expect(
+                    queryAllByText(
+                        'Você precisa estar de acordo com nossos termos'
+                    ).length
+                ).toBe(0);
+            });
+        });
+
+        it('should not render a warning if tracking code is valid', async () => {
+            const { getByTestId, getByRole, queryAllByText } = render(<Form />);
+            const codeInput = getByTestId('code');
+            const button = getByRole('button', { name: 'Envie' });
+
+            await act(async () => {
+                fireEvent.change(codeInput, {
+                    target: { value: 'EB067313532GB' },
+                });
+            });
+
+            await waitFor(() => {
+                expect(codeInput).toHaveValue('EB067313532GB');
+            });
+
+            await act(async () => {
+                fireEvent.click(button);
+            });
+
+            await waitFor(() => {
+                expect(queryAllByText('Digite um código válido.').length).toBe(
+                    0
+                );
+            });
+        });
     });
 
     describe('With a codigo de rastreio', () => {
