@@ -425,7 +425,7 @@ const Form: React.FC = () => {
                                 data-testid="data_use_consent"
                                 {...register('data_use_consent', {
                                     required:
-                                        'Você precisa estar de acordos com nossos termos',
+                                        'Você precisa estar de acordo com nossos termos',
                                 })}
                                 type="checkbox"
                                 value="true"
