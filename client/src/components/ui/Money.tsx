@@ -39,6 +39,7 @@ const Time: React.FC<MoneyProps> = ({
                 {...rest}
                 {...MASK_OPTIONS}
                 inputRef={ref}
+                data-testid={fieldName}
                 onAccept={value => {
                     setValue(fieldName, value);
                 }}
