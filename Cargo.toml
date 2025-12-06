@@ -22,7 +22,7 @@ actix-tls = "3.2"
 actix-utils = "3"
 actix-web = { version = "4.11.0", features = ["cookies"] }
 actix-web-actors = "4.1"
-actix-web-lab = "0.20"
+actix-web-lab = "0.24"
 actix-ws = "0.2.5"
 actix-rt = "2.2.0"
 actix-service = "2.0.0"
