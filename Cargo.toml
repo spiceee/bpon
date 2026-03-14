@@ -50,7 +50,7 @@ redis = { version = "0.24.0", default-features = false, features = [
 ] }
 
 derive_more = "0.99.7"
-chrono = { version = "0.4.20", default-features = false, features = [
+chrono = { version = "0.4.42", default-features = false, features = [
     "clock",
     "serde",
 ] }
