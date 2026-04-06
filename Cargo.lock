@@ -251,9 +251,9 @@ dependencies = [
 
 [[package]]
 name = "actix-protobuf"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a14dd296f850b814ca6f21d9a8ab92232887c07be2082562b5f3e33286f5b24d"
+checksum = "f8056a3324ea9549ad361d424272560b34c9153eb79748f4ccf9c7c6ba890b26"
 dependencies = [
  "actix-web",
  "derive_more 0.99.20",
@@ -2795,9 +2795,9 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.12.6"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "deb1435c188b76130da55f17a466d252ff7b1418b2ad3e037d127b94e3411f29"
+checksum = "2796faa41db3ec313a31f7624d9286acf277b52de526150b7e69f3debf891ee5"
 dependencies = [
  "bytes",
 ]
