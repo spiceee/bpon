@@ -43,7 +43,7 @@ tokio-util = "0.7.18"
 tokio-stream = "0.1.1"
 refinery = { version = "0.8.12", features = ["tokio-postgres"] }
 barrel = { version = "0.7.0", features = ["pg"] }
-redis = { version = "0.24.0", default-features = false, features = [
+redis = { version = "1.0.2", default-features = false, features = [
     "tokio-comp",
     "aio",
     "connection-manager",
