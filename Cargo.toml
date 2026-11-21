@@ -26,7 +26,7 @@ actix-web-lab = "0.26"
 actix-ws = "0.2.5"
 actix-rt = "2.2.0"
 actix-service = "2.0.0"
-actix-extensible-rate-limit = { version = "0.3.1", features = ["redis"] }
+actix-extensible-rate-limit = { version = "0.4.0", features = ["redis"] }
 
 ssr_rs = "0.8.3"
 deadpool-postgres = { version = "0.14", features = ["serde"] }
